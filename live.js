@@ -1,6 +1,6 @@
 // الاتصال المباشر بالشيت عبر Apps Script (راجع apps-script/Code.gs).
 // ضع رابط النشر (ينتهي بـ /exec) هنا. إن بقي فارغًا تعمل اللوحة على اللقطة الثابتة في data.js.
-const LIVE_URL = '';
+const LIVE_URL = 'https://script.google.com/macros/s/AKfycbxaE4H9at7cd1U7oQMTkTD3zTDLxs81qZISyaqn8wyfHrz2vLe8Y6Oev11_bTWwqbmvSA/exec';
 const REFRESH_SEC = 120;
 
 (function () {
