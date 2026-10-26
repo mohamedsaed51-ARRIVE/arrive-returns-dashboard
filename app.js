@@ -1,5 +1,4 @@
-const RAW = window.OCT_DATA;
-const ROWS = OCT.prep(RAW);
+let ROWS = OCT.prep(window.OCT_DATA);
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => (n == null ? '—' : Number(n).toLocaleString('en-US'));
 const pct = (x) => (x == null ? '—' : (x * 100).toFixed(2) + '%');
@@ -33,7 +32,8 @@ const setIc = (id, n) => { const e = $(id); if (e) e.innerHTML = svg(n); };
 [['ic-k1','box'],['ic-k2','undo'],['ic-k3','check'],['ic-k4','plus'],['ic-k5','flag'],['ic-reset','undo'],['ic-reset2','undo'],['ic-sl','sl'],['ic-search','search'],['ic-cal','cal']].forEach((a) => setIc(a[0], a[1]));
 
 // ---------- الحالة ----------
-const BRANCHES = [...new Set(ROWS.map((r) => r.branch))].sort((a, b) => a.localeCompare(b, 'ar'));
+const branchList = () => [...new Set(ROWS.map((r) => r.branch))].sort((a, b) => a.localeCompare(b, 'ar'));
+let BRANCHES = branchList();
 const S = { branches: new Set(), from: '', to: '', flag: 'all', mode: 'written', excl: 'no', q: '', sort: { log: ['sheetRow', 1], br: ['sent', -1] }, page: 1, size: 25 };
 const dayOf = (iso) => (iso ? Number(iso.slice(8, 10)) : null);
 
@@ -234,3 +234,9 @@ function applyTheme(t) {
 $('themeToggle').onclick = () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 applyTheme(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 refresh();
+// استبدال البيانات بنسخة حيّة من الشيت مع الإبقاء على الفلاتر الحالية
+window.ARRIVE_setData = (raw) => {
+  ROWS = OCT.prep(raw); BRANCHES = branchList();
+  [...S.branches].forEach((b) => { if (!BRANCHES.includes(b)) S.branches.delete(b); });
+  refresh();
+};
