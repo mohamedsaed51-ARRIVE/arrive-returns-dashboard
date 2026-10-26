@@ -126,6 +126,15 @@
           const X = OCT.totals(ex === 'yes' ? noDup : ALL, md); return '<tr><td>' + lb + '</td><td class="num">' + L(X.sent) + '</td><td class="num">' + L(X.unrecv) + '</td><td class="num">' + pct(X.rate) + '</td></tr>'; }).join('')) +
       '<p class="rp-note">استبعاد المكرر والمتابعة يزيل ' + L(a.sent - b2.sent) + ' شحنة من المرسل و' + L(a.unrecv - b2.unrecv) + ' من غير المستلم.</p>' + foot()));
 
+    // 7-ب) السجل التفصيلي — يُضاف فقط عند ضيق نطاق التصفية (فرع أو فترة محددة) حتى يبقى التقرير مقروءًا
+    if (CUR.length <= 120) {
+      const logCols = [{ t: 'صف الشيت', num: true, w: '16mm' }, { t: 'التاريخ', num: true, w: '22mm' }, { t: 'الفرع' }, { t: 'مرسل', num: true, w: '16mm' }, { t: 'مستلم', num: true, w: '16mm' }, { t: 'غير مستلم', num: true, w: '18mm' }, { t: 'غير مدرجة', num: true, w: '18mm' }, { t: 'الملاحظات' }];
+      const logRows = CUR.slice().sort((x, y) => x.sheetRow - y.sheetRow);
+      chunk(logRows, 32).forEach((grp, gi, all) => pages.push(page(head('السجل التفصيلي' + (all.length > 1 ? ' (' + (gi + 1) + '/' + all.length + ')' : ''), ctx) +
+        table(logCols, grp.map((r) => '<tr><td class="num">' + r.sheetRow + '</td><td class="num">' + dmy(r.date) + '</td><td>' + esc(r.branch) + '</td><td class="num">' + L(r.sent) + '</td><td class="num">' + L(r.recv) + '</td><td class="num">' + L(OCT.unrecvOf(r, mode)) + '</td><td class="num">' + L(r.extra) + '</td><td>' + (r.flags.map(flName).map(esc).join('، ') || '—') + '</td></tr>').join(''), 'rp-compact') +
+        (gi === all.length - 1 ? '<p class="rp-note">الصفوف كما في ورقة «شهر 10» ورقمها يطابق رقم الصف في الشيت. يظهر هذا القسم عندما لا يتجاوز عدد الصفوف المشمولة 120 صفًا.</p>' : '') + foot())));
+    }
+
     // 8) الختام
     pages.push(page(head('الختام ومنهجية الإعداد', ctx) + '<div class="rp-close"><h3>أساس الإعداد</h3><ul>' +
       '<li>عدد الصفوف المشمولة: <b class="num">' + L(T.rows) + '</b> للفترة <b class="num">' + periodTxt + '</b>.</li>' +
@@ -171,12 +180,11 @@
     return out;
   }
 
-  function open() {
+  // يعرض صفحات جاهزة في المعاينة؛ build اختياري لتقارير التبويبات الأخرى (مثل SLA)
+  function show(pages) {
     const ov = document.getElementById('reportOverlay'); if (!ov) return;
     savedTheme = document.documentElement.getAttribute('data-theme');
     document.documentElement.removeAttribute('data-theme');
-    let pages;
-    try { pages = build(); } catch (e) { console.error(e); pages = [page('<div class="rp-empty"><p>تعذّر إعداد التقرير.</p></div>')]; }
     ov.innerHTML = '<div class="rp-toolbar"><div class="rp-tb-title">معاينة التقرير</div><div class="rp-tb-actions"><button type="button" class="icon-btn" id="rpPrint">طباعة / حفظ PDF</button><button type="button" class="icon-btn" id="rpClose">إغلاق</button></div></div><div class="rp-stage">' + pages.join('') + '</div>';
     const sheets = ov.querySelectorAll('.rp-page');
     sheets.forEach((p, i) => { const pn = p.querySelector('.rp-pn'); if (pn) pn.textContent = 'صفحة ' + (i + 1) + ' من ' + sheets.length; });
@@ -187,6 +195,11 @@
     document.getElementById('rpPrint').onclick = () => window.print();
     document.addEventListener('keydown', onKey);
   }
+  function open(builder) {
+    let pages;
+    try { pages = (typeof builder === 'function' ? builder : build)(); } catch (e) { console.error(e); pages = [page('<div class="rp-empty"><p>تعذّر إعداد التقرير.</p></div>')]; }
+    show(pages);
+  }
   const onKey = (e) => { if (e.key === 'Escape') close(); };
   function close() {
     const ov = document.getElementById('reportOverlay'); if (!ov) return;
@@ -196,6 +209,6 @@
     if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
     document.removeEventListener('keydown', onKey);
   }
-  const btn = document.getElementById('qaReport'); if (btn) btn.onclick = open;
-  window.ArriveReport = { open, close, build };
+  const btn = document.getElementById('qaReport'); if (btn) btn.onclick = () => open();
+  window.ArriveReport = { open, close, build, kit: { page, head, foot, table, kpi, chartImg, axis, COL, chunk, L, miss, MISSING } };
 })();

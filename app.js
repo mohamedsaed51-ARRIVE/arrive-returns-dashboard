@@ -85,8 +85,8 @@ $('fFlag').addEventListener('change', (e) => { S.flag = e.target.value; S.page =
 $('fMode').addEventListener('change', (e) => { S.mode = e.target.value; refresh(); });
 $('fExcl').addEventListener('change', (e) => { S.excl = e.target.value; S.page = 1; refresh(); });
 function resetAll() {
-  S.branches.clear(); S.from = S.to = ''; S.flag = 'all'; S.q = ''; S.page = 1;
-  $('fSearch').value = ''; $('fFrom').value = ''; $('fTo').value = ''; $('fFlag').value = 'all';
+  S.branches.clear(); S.from = S.to = ''; S.flag = 'all'; S.excl = 'no'; S.q = ''; S.page = 1;
+  $('fExcl').value = 'no'; $('fSearch').value = ''; $('fFrom').value = ''; $('fTo').value = ''; $('fFlag').value = 'all';
   refresh();
 }
 $('btnReset').onclick = resetAll; $('qaReset').onclick = resetAll;
@@ -187,7 +187,7 @@ function renderLog() {
     const diff = S.mode === 'calc' && r.un !== r.unrecv ? ' <span class="hint" title="القيمة المكتوبة في الشيت">(الشيت: ' + fmt(r.unrecv) + ')</span>' : '';
     return '<tr><td class="id-cell num">' + r.sheetRow + '</td><td class="num">' + dmy(r.date) + '</td><td>' + esc(r.branch) + '</td><td class="num">' + fmt(r.sent) + '</td><td class="num">' + fmt(r.recv) + '</td><td class="num">' + fmt(r.un) + diff + '</td><td class="num">' + fmt(r.extra) + '</td><td>' + badge + '</td><td>' + fl + '</td></tr>';
   }).join('') : '<tr class="empty-row"><td colspan="9"><div class="empty-state"><b>لا توجد صفوف</b><span>غيّر عوامل التصفية</span></div></td></tr>';
-  $('pgInfo').innerHTML = sorted.length ? 'عرض <b>' + (S.page - 1) * S.size + 1 + '</b> – <b>' + Math.min(S.page * S.size, sorted.length) + '</b> من <b>' + fmt(sorted.length) + '</b>' : 'لا توجد صفوف';
+  $('pgInfo').innerHTML = sorted.length ? 'عرض <b>' + ((S.page - 1) * S.size + 1) + '</b> – <b>' + Math.min(S.page * S.size, sorted.length) + '</b> من <b>' + fmt(sorted.length) + '</b>' : 'لا توجد صفوف';
   $('pgNow').textContent = S.page; $('pgAll').textContent = pages;
   $('pgPrev').disabled = S.page <= 1; $('pgNext').disabled = S.page >= pages;
   markArrows('logTbl', S.sort.log);
@@ -201,6 +201,7 @@ function renderChips() {
   if (S.from) chips.push(['من ' + dmy(S.from), () => { S.from = ''; $('fFrom').value = ''; }]);
   if (S.to) chips.push(['إلى ' + dmy(S.to), () => { S.to = ''; $('fTo').value = ''; }]);
   if (S.flag !== 'all') chips.push([S.flag === 'flag' ? 'عليها ملاحظة جودة' : 'بدون ملاحظات', () => { S.flag = 'all'; $('fFlag').value = 'all'; }]);
+  if (S.excl === 'yes') chips.push(['استبعاد المكرر/المتابعة', () => { S.excl = 'no'; $('fExcl').value = 'no'; }]);
   if (S.q.trim()) chips.push(['بحث: ' + S.q, () => { S.q = ''; $('fSearch').value = ''; }]);
   const bar = $('activeBar');
   bar.className = 'active-filters-bar' + (chips.length ? ' has-filters' : '');
