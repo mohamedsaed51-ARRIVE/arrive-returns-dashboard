@@ -1,0 +1,20 @@
+/* ---- طبقة خاصة بهذه اللوحة (أيقونات SVG بدل Font Awesome + عناصر إضافية) ---- */
+svg.ic{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-.125em}
+.stub-ic svg.ic{width:22px;height:22px}
+body{padding-bottom:0}
+tbody tr{cursor:default}
+.note-box{background:var(--surface);border:1px solid var(--line);border-inline-start:4px solid var(--status-under-action);border-radius:var(--radius-md);padding:12px 16px;font-size:var(--fs-small);color:var(--ink);box-shadow:var(--shadow-card);line-height:1.8}
+.note-box b{color:var(--navy-deep)}
+.mini-table{width:100%;border-collapse:collapse;font-size:var(--fs-small)}
+.mini-table th{background:var(--table-header-bg);color:var(--table-header-fg);padding:10px 12px;text-align:right;font-size:var(--fs-caption);position:static;cursor:default}
+.mini-table td{padding:9px 12px;border-top:1px solid var(--line)}
+.mini-table tr.on td{background:var(--arrive-light-blue);font-weight:700}
+:root[data-theme="dark"] .mini-table tr.on td{background:var(--surface-alt)}
+.mini-table td.num,.mini-table th.num{text-align:center}
+.chip-sel{display:flex;gap:6px;flex-wrap:wrap}
+.fgroup select{width:100%}
+.tbl-wrap{overflow:auto}
+.flag-pill{display:inline-block;margin:1px 2px;padding:1px 8px;border-radius:var(--radius-pill);font-size:var(--fs-micro);font-weight:700;background:var(--status-under-action-bg);color:var(--status-under-action-fg);white-space:nowrap}
+.flag-pill.dup{background:var(--status-violation-bg);color:var(--status-violation-fg)}
+.hint{font-size:var(--fs-caption);color:var(--ink-faint);margin-top:6px}
+@media (max-width:640px){.panel-grid.halves{grid-template-columns:1fr}}
