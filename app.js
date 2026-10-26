@@ -23,13 +23,14 @@ const ICONS = {
   moon: '<path d="M21 13A9 9 0 1111 3a7 7 0 0010 10z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   sl: '<path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+  file: '<path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V8l-6-5z"/><path d="M14 3v5h6M8 13h8M8 17h5"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
   cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
   warn: '<path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18h0"/>',
 };
 const svg = (n) => '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[n] + '</svg>';
 const setIc = (id, n) => { const e = $(id); if (e) e.innerHTML = svg(n); };
-[['ic-k1','box'],['ic-k2','undo'],['ic-k3','check'],['ic-k4','plus'],['ic-k5','flag'],['ic-reset','undo'],['ic-reset2','undo'],['ic-sl','sl'],['ic-search','search'],['ic-cal','cal']].forEach((a) => setIc(a[0], a[1]));
+[['ic-k1','box'],['ic-k2','undo'],['ic-k3','check'],['ic-k4','plus'],['ic-k5','flag'],['ic-reset','undo'],['ic-rep','file'],['ic-reset2','undo'],['ic-sl','sl'],['ic-search','search'],['ic-cal','cal']].forEach((a) => setIc(a[0], a[1]));
 
 // ---------- الحالة ----------
 const branchList = () => [...new Set(ROWS.map((r) => r.branch))].sort((a, b) => a.localeCompare(b, 'ar'));
