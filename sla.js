@@ -1,6 +1,6 @@
 // تبويب «SLA المرتجعات» — يعمل بجانب لوحة المطابقة دون أي تعديل في منطقها.
 // المصدر: شيت «Sla RTO» (تابات يومية). ضع رابط /exec لسكربت apps-script/Code-SLA.gs هنا؛ إن بقي فارغًا تُستخدم اللقطة في sla-data.js.
-const SLA_LIVE_URL = '';
+const SLA_LIVE_URL = 'https://script.google.com/macros/s/AKfycbxa6AXkilUhoIpoUs_kcGVHIqcHL91t4oHBQ6gVz9qTPuB3vdaFdCYicpZMJEO4ePCn/exec';
 const SLA_REFRESH_SEC = 600;
 
 (function () {
@@ -193,6 +193,9 @@ const SLA_REFRESH_SEC = 600;
 
   function drawCharts() {
     if (!window.Chart || !visible()) return;
+    try { drawChartsUnsafe(); } catch (e) { console.error('[sla-charts]', e); }
+  }
+  function drawChartsUnsafe() {
     const p = P();
     Chart.defaults.font.family = 'Cairo, Inter, system-ui, sans-serif'; Chart.defaults.color = p.faint;
     const o = { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { labels: { color: p.ink, boxWidth: 12 } } } };
@@ -301,8 +304,8 @@ const SLA_REFRESH_SEC = 600;
     [S.branches, S.statuses, S.senders].forEach((set, i) => { const ok = new Set([opts.branch, opts.status, opts.sender][i]()); [...set].forEach((v) => { if (!ok.has(v)) set.delete(v); }); });
     const rets = ROWS.map((r) => r.ret).filter(Boolean).sort();
     META.period = rets.length ? dmy(rets[0]) + ' — ' + dmy(rets[rets.length - 1]) : '';
-    if (visible()) { applyHeader(); refresh(); }
     $('sConn').textContent = (source === 'live' ? 'مباشر من الشيت — ' : 'لقطة ثابتة — ') + (j.updatedAt ? new Date(j.updatedAt).toLocaleDateString('ar-EG') : '');
+    if (visible()) { applyHeader(); refresh(); }
   }
   function loadSnap() {
     return new Promise((res) => {
@@ -312,12 +315,15 @@ const SLA_REFRESH_SEC = 600;
     });
   }
   async function pull() {
-    if (!SLA_LIVE_URL) return;
+    if (!SLA_LIVE_URL) { $('sConn').textContent += ' (بدون رابط مباشر في sla.js)'; return; }
+    $('sConn').textContent = 'جارٍ الاتصال بالشيت…';
     try {
-      const j = await (await fetch(SLA_LIVE_URL, { cache: 'no-store' })).json();
+      const res = await fetch(SLA_LIVE_URL, { cache: 'no-store' });
+      const txt = await res.text();
+      let j; try { j = JSON.parse(txt); } catch (e) { throw new Error('الرد ليس JSON (HTTP ' + res.status + ') — غالبًا النشر ليس «Anyone» أو الرابط ليس رابط Web app'); }
       if (!j.ok) throw new Error(j.error || 'رد غير صالح');
       setData(j, 'live');
-    } catch (e) { $('sConn').textContent = 'تعذّر الاتصال — يُعرض آخر بيانات محمّلة'; console.error('[sla-live]', e); }
+    } catch (e) { $('sConn').textContent = 'تعذّر الاتصال: ' + e.message + ' — يُعرض آخر بيانات محمّلة'; console.error('[sla-live]', e); }
   }
 
   // ---------- التبويبات ----------
