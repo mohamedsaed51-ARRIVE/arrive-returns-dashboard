@@ -88,7 +88,7 @@ const SLA_REFRESH_SEC = 600;
       <div class="ls-item"><span class="ls-l">الاتصال</span><span class="ls-v" id="sConn" style="direction:rtl">—</span></div>
     </div>
     <div class="qa-spacer"></div>
-    <div class="quick-actions"><button class="qa-btn" id="sReset" type="button">إعادة التصفية</button></div>
+    <div class="quick-actions"><button class="qa-btn" id="sReport" type="button">تقرير بالتصفية الحالية</button><button class="qa-btn" id="sReset" type="button">إعادة التصفية</button></div>
   </div>
   <div class="filter-bar"><div class="filter-wrap">
     <div class="filter-head"><div class="filter-title">عوامل التصفية وطريقة الحساب</div><div class="filter-head-actions"><span class="result-count"><b id="sResultCount">0</b> نتيجة</span><button class="btn-reset" id="sReset2" type="button">مسح الفلاتر</button></div></div>
@@ -382,4 +382,6 @@ const SLA_REFRESH_SEC = 600;
     if (location.hash === '#sla') show('sla');
   }
   init();
+  // واجهة قراءة فقط لتقرير SLA (report-sla.js) — لا تغيّر أي حساب
+  window.ArriveSla = { state: () => ({ S, ALL, CUR, ROWS, META, FL, UNKNOWN, ageOf, thr, stats, group }) };
 })();
