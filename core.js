@@ -40,5 +40,32 @@
     }
     return [...m].map(([k, v]) => Object.assign({ key: k }, totals(v, mode)));
   }
-  window.OCT = { prep, unrecvOf, pick, totals, group, DUP };
+
+  // وسم الجودة (يُحسب من الصفوف بترتيبها في الشيت؛ لا يغيّر أي قيمة)
+  function flagRows(rows) {
+    const seen = new Set(), prev = new Map(), kind = [], follows = new Set();
+    rows.forEach((r, i) => {
+      const sig = r.date + '|' + r.branch + '|' + r.sent + '|' + r.recv + '|' + r.unrecv + '|' + r.extra;
+      const p = prev.get(r.branch);
+      if (seen.has(sig)) kind[i] = 'dup';
+      else if (p && p.r.date === r.date && p.r.unrecv > 0 && Math.abs(r.sent - p.r.unrecv) <= 1) { kind[i] = 'follow'; follows.add(p.i); }
+      seen.add(sig); prev.set(r.branch, { r, i });
+    });
+    const perDay = new Map();
+    rows.forEach((r, i) => { if (kind[i] || follows.has(i)) return; const k = r.date + '|' + r.branch; perDay.set(k, (perDay.get(k) || 0) + 1); });
+    return rows.map((r, i) => {
+      const f = [];
+      if (kind[i] === 'dup') f.push('مكرر_متطابق');
+      else if (kind[i] === 'follow') f.push('متابعة_متبقي');
+      else if (!follows.has(i) && perDay.get(r.date + '|' + r.branch) > 1) f.push('تكرار_غير_واضح');
+      if (r.recv > r.sent && (r.recv - r.sent > r.extra || r.unrecv > 0)) f.push('مستلم_اكبر_غير_مفسر');
+      const a = Math.min(r.sent, Math.max(0, r.sent - (r.recv - r.extra))), b2 = Math.max(0, r.sent - r.recv);
+      if (r.unrecv !== a && r.unrecv !== b2) f.push('غير_مستلم_غير_مطابق');
+      const full = /^تم الاستلام/.test(r.status);
+      if ((full && r.unrecv > 0) || (!full && r.unrecv === 0)) f.push('حالة_غير_متسقة');
+      if (/[,،+]/.test(r.branch)) f.push('فرعين_مدمجين');
+      return Object.assign({}, r, { flags: f.join(';') });
+    });
+  }
+  window.OCT = { flagRows, prep, unrecvOf, pick, totals, group, DUP };
 })();
