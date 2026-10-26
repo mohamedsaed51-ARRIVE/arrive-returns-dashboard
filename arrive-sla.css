@@ -1,0 +1,13 @@
+/* ---- تبويب SLA المرتجعات: يستخدم نفس نظام التصميم، وهذه الإضافات فقط ---- */
+.view-tabs{background:var(--surface);border-bottom:1px solid var(--line);padding:0 var(--page-pad);display:flex;gap:4px}
+.view-tab{appearance:none;background:none;border:0;border-bottom:3px solid transparent;padding:12px 18px;font:inherit;font-weight:700;font-size:var(--fs-small);color:var(--ink-soft);cursor:pointer}
+.view-tab:hover{color:var(--arrive-blue)}
+.view-tab[aria-selected="true"]{color:var(--arrive-blue);border-bottom-color:var(--arrive-blue)}
+#view-sla[hidden],#view-match[hidden]{display:none}
+.sla-thr{display:flex;gap:8px;align-items:center}
+.sla-thr input{width:100%}
+.badge.sla-in{background:var(--status-success-bg);color:var(--status-success-fg)}
+.badge.sla-out{background:var(--status-violation-bg);color:var(--status-violation-fg)}
+.sla-empty{padding:40px 20px;text-align:center;color:var(--ink-soft)}
+.top-meta[hidden],.header-meta-row[hidden]{display:none}
+.filter-bar input[type=number]{appearance:textfield;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius-sm);height:var(--control-h-sm);padding:0 10px;font-family:var(--font-numeric);font-size:var(--fs-caption);color:var(--ink);width:100%;min-width:0;direction:ltr}

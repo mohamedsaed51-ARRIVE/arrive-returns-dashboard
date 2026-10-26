@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="arrive-ui.css">
 <link rel="stylesheet" href="arrive-returns.css">
 <link rel="stylesheet" href="arrive-report.css">
+<link rel="stylesheet" href="arrive-sla.css">
 </head>
 <body>
 <header class="top">
@@ -42,6 +43,8 @@
     </div>
   </div>
 </header>
+<nav class="view-tabs" role="tablist" aria-label="أقسام اللوحة"><button class="view-tab" role="tab" data-view="match" aria-selected="true" type="button">مطابقة المرتجعات</button><button class="view-tab" role="tab" data-view="sla" aria-selected="false" type="button">SLA المرتجعات</button></nav>
+<div id="view-match">
 
 <div class="control-bar">
   <div class="live-stats">
@@ -153,6 +156,8 @@
     الافتراضي: عمود «غير المستلم» كما هو مكتوب وكل الصفوف، ولم يُغيَّر أي تعريف دون إعلانك.
   </div>
 </main>
+</div>
+<div id="view-sla" hidden></div>
 
 <footer class="enterprise-footer">
   <div class="footer-brand-row"><img src="arrive-logo-white.png" alt="ARRIVE"><span class="footer-brand-text">ARRIVE — المراجعة التشغيلية</span><span class="footer-version-pill">Returns Matching · Oct 2026</span></div>
@@ -167,5 +172,6 @@
 <script src="app.js"></script>
 <script src="report.js"></script>
 <script src="live.js"></script>
+<script src="sla.js"></script>
 </body>
 </html>
