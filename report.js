@@ -180,16 +180,66 @@
     return out;
   }
 
+  // يملأ المساحة الفاضية أسفل كل صفحة بعناصر الصفحة التالية (رسم/جدول/فقرة)، وتُقسَّم صفوف الجداول الطويلة وتُكرَّر ترويستها.
+  // الغلاف لا يُمَس، ولا يُنقل عنوان قسم منفصلًا عن العنصر الذي يليه.
+  function packPages(ov) {
+    const GAP = 12, MIN_ROWS = 3;
+    const free = (pg) => {
+      const f = pg.querySelector('.rp-foot'), kids = [...pg.children].filter((c) => c !== f);
+      const k = pg.getBoundingClientRect().height / pg.offsetHeight || 1;
+      return (f.getBoundingClientRect().top - kids[kids.length - 1].getBoundingClientRect().bottom) / k - GAP;
+    };
+    const span = (pg, els) => {
+      const k = pg.getBoundingClientRect().height / pg.offsetHeight || 1;
+      return (els[els.length - 1].getBoundingClientRect().bottom - els[0].getBoundingClientRect().top) / k;
+    };
+    const body = (pg) => [...pg.children].filter((c) => !c.classList.contains('rp-head') && !c.classList.contains('rp-foot'));
+    const unitOf = (list) => (list[0].classList.contains('rp-section') || list[0].tagName === 'H3') && list[1] ? [list[0], list[1]] : [list[0]];
+    let pgs = [...ov.querySelectorAll('.rp-page')];
+    for (let i = 1; i < pgs.length - 1; i++) {
+      const a = pgs[i];
+      if (a.classList.contains('cover')) continue;
+      for (;;) {
+        const b = pgs[i + 1];
+        if (!b || b.classList.contains('cover')) break;
+        const list = body(b);
+        if (!list.length) { b.remove(); pgs.splice(i + 1, 1); continue; }
+        const unit = unitOf(list), foot = a.querySelector('.rp-foot'), room = free(a);
+        // 1) العنصر كاملًا
+        const probe = span(b, unit);
+        if (probe <= room) { unit.forEach((c) => a.insertBefore(c, foot)); continue; }
+        // 2) جدول طويل: انقل ما يتسع من صفوفه
+        const tbl = unit[unit.length - 1];
+        if (tbl.tagName === 'TABLE' && tbl.tBodies[0] && tbl.tBodies[0].rows.length > MIN_ROWS * 2) {
+          const head = unit.length > 1 ? unit[0] : null, rows = [...tbl.tBodies[0].rows];
+          const clone = tbl.cloneNode(false); clone.appendChild(tbl.tHead.cloneNode(true)); clone.appendChild(document.createElement('tbody'));
+          if (head) a.insertBefore(head, foot);
+          a.insertBefore(clone, foot);
+          let n = 0;
+          while (n < rows.length - MIN_ROWS && free(a) > rows[n].getBoundingClientRect().height + 2) { clone.tBodies[0].appendChild(rows[n]); n++; }
+          if (n >= MIN_ROWS) { continue; }
+          rows.slice(0, n).reverse().forEach((r) => tbl.tBodies[0].insertBefore(r, tbl.tBodies[0].firstChild));
+          clone.remove(); if (head) b.insertBefore(head, tbl);
+        }
+        break;
+      }
+    }
+  }
   // يعرض صفحات جاهزة في المعاينة؛ build اختياري لتقارير التبويبات الأخرى (مثل SLA)
   function show(pages) {
     const ov = document.getElementById('reportOverlay'); if (!ov) return;
     savedTheme = document.documentElement.getAttribute('data-theme');
     document.documentElement.removeAttribute('data-theme');
     ov.innerHTML = '<div class="rp-toolbar"><div class="rp-tb-title">معاينة التقرير</div><div class="rp-tb-actions"><button type="button" class="icon-btn" id="rpPrint">طباعة / حفظ PDF</button><button type="button" class="icon-btn" id="rpClose">إغلاق</button></div></div><div class="rp-stage">' + pages.join('') + '</div>';
-    const sheets = ov.querySelectorAll('.rp-page');
-    sheets.forEach((p, i) => { const pn = p.querySelector('.rp-pn'); if (pn) pn.textContent = 'صفحة ' + (i + 1) + ' من ' + sheets.length; });
     ov.hidden = false; ov.setAttribute('aria-hidden', 'false'); document.body.classList.add('report-open');
     if (!document.getElementById('rpPageStyle')) { const st = document.createElement('style'); st.id = 'rpPageStyle'; st.textContent = '@page{size:A4 portrait;margin:0}'; document.head.appendChild(st); }
+    // القياس يحتاج المعاينة ظاهرة والصور محمّلة؛ بعده تُرقَّم الصفحات
+    const finish = () => {
+      try { packPages(ov); } catch (e) { console.warn('pack failed', e); }
+      const sheets = ov.querySelectorAll('.rp-page');
+      sheets.forEach((p, i) => { const pn = p.querySelector('.rp-pn'); if (pn) pn.textContent = 'صفحة ' + (i + 1) + ' من ' + sheets.length; });
+    };
+    Promise.all([...ov.querySelectorAll('img')].map((im) => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()))).then(finish);
     ov.scrollTop = 0;
     document.getElementById('rpClose').onclick = close;
     document.getElementById('rpPrint').onclick = () => window.print();
