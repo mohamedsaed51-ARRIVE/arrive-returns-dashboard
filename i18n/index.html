@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة مطابقة المرتجعات — ARRIVE</title>
+<link rel="icon" href="../arrive-logo-white.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../arrive-tokens.css">
+<link rel="stylesheet" href="../arrive-ui.css">
+<link rel="stylesheet" href="../arrive-returns.css">
+<link rel="stylesheet" href="../arrive-report.css">
+<link rel="stylesheet" href="../arrive-sla.css">
+<link rel="stylesheet" href="i18n-overrides.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-inner top-first">
+    <div class="top-brand">
+      <img class="brand-logo" src="../arrive-logo-white.png" alt="ARRIVE">
+      <span class="brand-divider" aria-hidden="true"></span>
+      <div class="brand-sys"><b>المراجعة التشغيلية</b><span>نظام متابعة مطابقة المرتجعات</span></div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="langToggle" type="button" data-lang-toggle data-no-i18n>English</button>
+      <button class="icon-btn" id="themeToggle" type="button"><span id="themeIc"></span> <span id="themeToggleLabel">الوضع الداكن</span></button>
+    </div>
+  </div>
+  <div class="top-inner top-second">
+    <div>
+      <h1 class="title">لوحة مطابقة المرتجعات — أكتوبر 2026</h1>
+      <div class="subtitle">المرسل من الفروع مقابل المستلم، وغير المستلم، والشحنات «غير المدرجة»</div>
+      <div class="header-meta-row">
+        <span class="last-updated-chip"><span class="lu-dot"></span><span>لقطة من الشيت بتاريخ</span><span class="lu-time">26/10/2026</span></span>
+        <span class="current-date-chip" id="rangeChip"><span id="ic-cal"></span><span class="lu-time" id="rangeTxt">—</span></span>
+        <span class="conn-status-chip" data-state="demo"><span class="conn-dot"></span><span>لقطة ثابتة — غير متصلة بالشيت</span></span>
+      </div>
+    </div>
+    <div class="top-meta">
+      <div class="meta-item"><div class="v num" id="metaRows">0</div><div class="l">صف مشمول</div></div>
+      <div class="meta-item"><div class="v num" id="metaBranches">0</div><div class="l">فرعًا مشمولًا</div></div>
+      <div class="meta-item"><div class="v num" id="metaDays">0</div><div class="l">يوم</div></div>
+    </div>
+  </div>
+</header>
+<nav class="view-tabs" role="tablist" aria-label="أقسام اللوحة"><button class="view-tab" role="tab" data-view="match" aria-selected="true" type="button">مطابقة المرتجعات</button><button class="view-tab" role="tab" data-view="sla" aria-selected="false" type="button">SLA المرتجعات</button></nav>
+<div id="view-match">
+
+<div class="control-bar">
+  <div class="live-stats">
+    <div class="ls-item"><span class="ls-l">إجمالي السجلات</span><span class="ls-v" id="lsTotal">0</span></div>
+    <div class="ls-item"><span class="ls-l">عوامل التصفية النشطة</span><span class="ls-v" id="lsFilters">0</span></div>
+    <div class="ls-item"><span class="ls-l">السجلات المعروضة</span><span class="ls-v" id="lsVisible">0</span></div>
+    <div class="ls-item"><span class="ls-l">أساس حساب غير المستلم</span><span class="ls-v" id="lsMode" style="direction:rtl">—</span></div>
+  </div>
+  <div class="qa-spacer"></div>
+  <div class="quick-actions">
+    <button class="qa-btn" id="qaReport" type="button"><span class="qa-icon" id="ic-rep"></span> تقرير بالتصفية الحالية</button>
+    <button class="qa-btn" id="qaReset" type="button"><span class="qa-icon" id="ic-reset"></span> إعادة التصفية</button>
+  </div>
+</div>
+
+<div class="filter-bar">
+<div class="filter-wrap">
+  <div class="filter-head">
+    <div class="filter-title"><span id="ic-sl"></span> عوامل التصفية وطريقة الحساب</div>
+    <div class="filter-head-actions">
+      <span class="result-count"><b id="resultCount">0</b> نتيجة</span>
+      <button class="btn-reset" id="btnReset" type="button"><span id="ic-reset2"></span> مسح الفلاتر</button>
+    </div>
+  </div>
+  <div class="filter-grid">
+    <div class="fgroup filter-search">
+      <label for="fSearch">بحث (اسم الفرع أو رقم الصف في الشيت)</label>
+      <input type="text" id="fSearch" placeholder="اكتب للبحث…">
+      <span id="ic-search" style="position:absolute;inset-inline-end:10px;bottom:9px;color:var(--ink-faint);font-size:12px;pointer-events:none"></span>
+    </div>
+    <div class="fgroup"><label>الفرع</label><div class="ms" id="msBranch"></div></div>
+    <div class="fgroup"><label for="fFrom">من تاريخ</label><input type="date" id="fFrom" min="2026-10-01" max="2026-10-31"></div>
+    <div class="fgroup"><label for="fTo">إلى تاريخ</label><input type="date" id="fTo" min="2026-10-01" max="2026-10-31"></div>
+    <div class="fgroup"><label for="fFlag">ملاحظات الجودة</label>
+      <select id="fFlag"><option value="all">كل الصفوف</option><option value="flag">عليها ملاحظة جودة فقط</option><option value="clean">بدون ملاحظات فقط</option></select></div>
+    <div class="fgroup"><label for="fMode">أساس حساب «غير المستلم»</label>
+      <select id="fMode"><option value="written">كما هو مكتوب في عمود الشيت</option><option value="calc">محسوب: المرسل − (المستلم − غير المدرجة)</option></select></div>
+    <div class="fgroup"><label for="fExcl">الصفوف المكررة / المتابعة</label>
+      <select id="fExcl"><option value="no">إدراج كل الصفوف (كما في الشيت)</option><option value="yes">استبعاد المكرر المتطابق وصفوف المتابعة</option></select></div>
+  </div>
+</div>
+</div>
+<div class="active-filters-bar" id="activeBar"></div>
+
+<main>
+  <div class="section-heading">
+    <h2><span class="tag">مؤشرات</span> المؤشرات الرئيسية</h2>
+    <span class="section-sub" id="kpiSub">محسوبة ضمن عوامل التصفية وطريقة الحساب المختارة</span>
+  </div>
+  <section class="kpi-row" id="kpiRow">
+    <div class="stub tone-brand"><div class="stub-top"><div class="stub-ic" id="ic-k1"></div><div class="stub-main"><div class="stub-label">إجمالي المرسل</div><div class="stub-value num" id="kSent">0</div></div></div><div class="stub-sub" id="kSentSub">—</div></div>
+    <div class="stub tone-violation"><div class="stub-top"><div class="stub-ic" id="ic-k2"></div><div class="stub-main"><div class="stub-label">غير المستلم</div><div class="stub-value num" id="kUn">0</div></div></div><div class="stub-sub" id="kUnSub">—</div></div>
+    <div class="stub tone-success"><div class="stub-top"><div class="stub-ic" id="ic-k3"></div><div class="stub-main"><div class="stub-label">نسبة المطابقة</div><div class="stub-value num" id="kRate">0</div><div class="stub-pct num" id="kRatePct">—</div></div></div><div class="stub-sub" id="kRateSub">—</div></div>
+    <div class="stub tone-in-progress"><div class="stub-top"><div class="stub-ic" id="ic-k4"></div><div class="stub-main"><div class="stub-label">شحنات «غير مدرجة»</div><div class="stub-value num" id="kEx">0</div></div></div><div class="stub-sub" id="kExSub">—</div></div>
+    <div class="stub tone-under-action"><div class="stub-top"><div class="stub-ic" id="ic-k5"></div><div class="stub-main"><div class="stub-label">صفوف عليها ملاحظة جودة</div><div class="stub-value num" id="kFl">0</div></div></div><div class="stub-sub" id="kFlSub">—</div></div>
+  </section>
+
+  <div class="section-heading">
+    <h2><span class="tag">اتجاهات</span> الاتجاهات والتوزيعات</h2>
+    <span class="section-sub">اضغط على أي فرع داخل الرسم لتصفية اللوحة عليه</span>
+  </div>
+  <section class="panel-grid single">
+    <div class="panel"><h3>المرسل والمطابقة يوميًا</h3><div class="panel-sub">أعمدة: مطابق / غير مستلم — الخط: نسبة المطابقة اليومية (%)</div><div class="chart-wrap tall"><canvas id="chDaily"></canvas></div></div>
+  </section>
+  <section class="panel-grid halves">
+    <div class="panel"><h3>غير المستلم حسب الفرع</h3><div class="panel-sub">أعلى 12 فرعًا في عدد الشحنات غير المستلمة</div><div class="chart-wrap tall"><canvas id="chBranchUn"></canvas></div></div>
+    <div class="panel"><h3>نسبة المطابقة حسب الفرع</h3><div class="panel-sub">أقل 12 فرعًا في نسبة المطابقة (مرسل − غير مستلم) ÷ مرسل</div><div class="chart-wrap tall"><canvas id="chBranchRate"></canvas></div></div>
+  </section>
+
+  <div class="section-heading">
+    <h2><span class="tag">جودة</span> جودة البيانات وحساسية الأرقام</h2>
+    <span class="section-sub">الصفوف الأصلية لم تُعدّل. كل ملاحظة معلَّمة على الصف ويمكنك استبعادها أو إبقاؤها من عوامل التصفية</span>
+  </div>
+  <section class="panel-grid halves">
+    <div class="panel"><h3>الملاحظات المكتشفة</h3><div class="panel-sub">ضمن الفرع والتاريخ المختارين</div><div class="tbl-wrap"><table class="mini-table" id="flagTbl"></table></div></div>
+    <div class="panel"><h3>أثر طريقة الحساب على النسبة</h3><div class="panel-sub">نفس الفرع والتاريخ المختارين، والصف المظلل هو الاختيار الحالي</div><div class="tbl-wrap"><table class="mini-table" id="sensTbl"></table></div><div class="hint" id="sensHint"></div></div>
+  </section>
+
+  <div class="section-heading">
+    <h2><span class="tag">فروع</span> أداء الفروع</h2>
+    <span class="section-sub">اضغط على عنوان العمود للترتيب، واضغط على الصف لتصفية الفرع</span>
+  </div>
+  <section class="table-panel">
+    <div class="table-head-bar"><h3>ملخص الفروع</h3><span class="result-count"><b id="brCount">0</b> فرع</span></div>
+    <div class="table-scroll"><table id="brTbl"><thead><tr>
+      <th data-k="key">الفرع <span class="arrow"></span></th><th data-k="rows">عدد الصفوف <span class="arrow"></span></th><th data-k="days">أيام التسجيل <span class="arrow"></span></th>
+      <th data-k="sent">المرسل <span class="arrow"></span></th><th data-k="unrecv">غير المستلم <span class="arrow"></span></th><th data-k="rate">نسبة المطابقة <span class="arrow"></span></th>
+      <th data-k="extra">غير مدرجة <span class="arrow"></span></th><th data-k="flagged">صفوف بملاحظات <span class="arrow"></span></th></tr></thead><tbody id="brBody"></tbody></table></div>
+  </section>
+
+  <div class="section-heading">
+    <h2><span class="tag">سجل</span> السجل التفصيلي</h2>
+    <span class="section-sub">الصفوف كما في الشيت، ورقم الصف يطابق رقمه في ورقة «شهر 10»</span>
+  </div>
+  <section class="table-panel">
+    <div class="table-head-bar"><h3>صفوف شهر 10</h3><span class="result-count"><b id="logCount">0</b> صف</span></div>
+    <div class="table-scroll"><table id="logTbl"><thead><tr>
+      <th data-k="sheetRow">صف الشيت <span class="arrow"></span></th><th data-k="date">التاريخ <span class="arrow"></span></th><th data-k="branch">الفرع <span class="arrow"></span></th>
+      <th data-k="sent">المرسل <span class="arrow"></span></th><th data-k="recv">المستلم <span class="arrow"></span></th><th data-k="un">غير المستلم <span class="arrow"></span></th>
+      <th data-k="extra">غير مدرجة <span class="arrow"></span></th><th data-k="status">حالة المطابقة <span class="arrow"></span></th><th data-k="nflags">الملاحظات <span class="arrow"></span></th></tr></thead><tbody id="logBody"></tbody></table></div>
+    <div class="pager"><div class="pager-info" id="pgInfo"></div><div class="pager-ctl">
+      <button class="pg-btn" id="pgPrev" type="button">السابق</button><span class="pager-info"><b id="pgNow">1</b> / <b id="pgAll">1</b></span><button class="pg-btn" id="pgNext" type="button">التالي</button>
+      <select id="pgSize"><option>25</option><option>50</option><option>100</option></select></div></div>
+  </section>
+
+  <div class="note-box" style="margin-top:20px">
+    <b>ملاحظات على المنهجية:</b> نسبة المطابقة = (المرسل − غير المستلم) ÷ المرسل. المصدر: ورقة «شهر 10» في «تقرير المرتجعات»، لقطة بتاريخ 26/10/2026 والشيت ما زال يُعدَّل، فالأرقام تتغير بعد أي تحديث فيه.
+    تواريخ 3–8 أكتوبر مكتوبة يوم/شهر وتواريخ 10–25 أكتوبر مكتوبة شهر/يوم، وقد قُرئت كلها كأيام من أكتوبر. «غير المدرجة» هي الشحنات المستلمة التي لا يوجد لها إرسال مسجّل.
+    الافتراضي: عمود «غير المستلم» كما هو مكتوب وكل الصفوف، ولم يُغيَّر أي تعريف دون إعلانك.
+  </div>
+</main>
+</div>
+<div id="view-sla" hidden></div>
+
+<footer class="enterprise-footer">
+  <div class="footer-brand-row"><img src="../arrive-logo-white.png" alt="ARRIVE"><span class="footer-brand-text">ARRIVE — المراجعة التشغيلية</span><span class="footer-version-pill">Returns Matching · Oct 2026</span></div>
+  <div class="footer-inner"><span class="f-item">المصدر: تقرير المرتجعات / شهر 10</span><span class="footer-divider"></span><span class="f-item">لقطة بتاريخ 26/10/2026</span></div>
+</footer>
+
+
+<div id="reportOverlay" class="report-overlay" hidden aria-hidden="true"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="../shared-i18n/arrive-i18n.js"></script>
+<script src="returns.dict.js"></script>
+<script>ArriveI18n.init({ dom: true, phrases: RETURNS_I18N.phrases, patterns: RETURNS_I18N.patterns, storageKey: 'arrive_lang' });</script>
+<script src="../data.js"></script>
+<script src="../core.js"></script>
+<script src="app.js"></script>
+<script src="report.js"></script>
+<script src="live.js"></script>
+<script src="sla.js?v=5"></script>
+<script src="report-sla.js?v=1"></script>
+</body>
+</html>

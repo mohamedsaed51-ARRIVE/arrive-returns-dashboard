@@ -1,0 +1,8 @@
+/* اتجاه LTR: مواضع كانت مضبوطة للعربية فقط (لا تؤثر على النسخة العربية) */
+[dir="ltr"] .mini-table th, [dir="ltr"] .rp-table th { text-align: left; }
+[dir="ltr"] .rp-table th.num, [dir="ltr"] .rp-table td.num { text-align: right; }
+/* الإنجليزية: نصوص أطول من العربية في شريط الإحصاءات (حالة الاتصال) ⇒ التفاف بدل تمرير أفقي */
+[dir="ltr"] .live-stats .ls-item { min-width: 0; max-width: 100%; }
+[dir="ltr"] .live-stats .ls-v { white-space: normal; overflow-wrap: anywhere; }
+/* تقرير A4: الأصل يثبّت direction:rtl على الطبقة — في الإنجليزية يصبح ltr */
+[dir="ltr"] .report-overlay { direction: ltr; }
