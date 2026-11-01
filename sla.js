@@ -293,6 +293,7 @@ const SLA_REFRESH_SEC = 600;
     ROWS = decode(j); META = { updatedAt: j.updatedAt, source };
     [S.branches, S.statuses, S.senders].forEach((set, i) => { const ok = new Set([opts.branch, opts.status, opts.sender][i]()); [...set].forEach((v) => { if (!ok.has(v)) set.delete(v); }); });
     const rets = ROWS.map((r) => r.ret).filter(Boolean).sort();
+    if (rets.length) ['sFrom', 'sTo'].forEach((i) => { $(i).min = rets[0]; $(i).max = rets[rets.length - 1]; });
     META.period = rets.length ? dmy(rets[0]) + ' — ' + dmy(rets[rets.length - 1]) : '';
     $('sConn').textContent = (source === 'live' ? 'مباشر من الشيت — ' : 'لقطة ثابتة — ') + (j.updatedAt ? new Date(j.updatedAt).toLocaleDateString('ar-EG') : '');
     if (visible()) { applyHeader(); refresh(); }
@@ -352,8 +353,7 @@ const SLA_REFRESH_SEC = 600;
     msS = makeMS('sMsSender', opts.sender, S.senders, 'كل الراسلين', () => { S.page = 1; refresh(); });
     const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
     on('sQ', 'input', (e) => { S.q = e.target.value; S.page = 1; refresh(); });
-    on('sFrom', 'change', (e) => { S.from = e.target.value; S.page = 1; refresh(); });
-    on('sTo', 'change', (e) => { S.to = e.target.value; S.page = 1; refresh(); });
+    ['input', 'change'].forEach((ev) => { on('sFrom', ev, (e) => { S.from = e.target.value; S.page = 1; refresh(); }); on('sTo', ev, (e) => { S.to = e.target.value; S.page = 1; refresh(); }); });
     on('sSensTbl', 'click', (e) => { const tr = e.target.closest('tr[data-m]'); if (!tr || tr.dataset.m === S.mode) return; S.mode = tr.dataset.m; refresh(); });
     on('sDup', 'change', (e) => { S.dup = e.target.value; S.page = 1; refresh(); });
     on('sThr', 'input', (e) => { S.thr = e.target.value.trim(); refresh(); });

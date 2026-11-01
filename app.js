@@ -39,10 +39,10 @@ const S = { branches: new Set(), from: '', to: '', flag: 'all', mode: 'written',
 const dayOf = (iso) => (iso ? Number(iso.slice(8, 10)) : null);
 
 function baseRows() {
-  const f = dayOf(S.from), t = dayOf(S.to), q = S.q.trim().toLowerCase();
+  const q = S.q.trim().toLowerCase();
   return ROWS.filter((r) =>
     (S.branches.size === 0 || S.branches.has(r.branch)) &&
-    (f == null || r.day >= f) && (t == null || r.day <= t) &&
+    (!S.from || r.date >= S.from) && (!S.to || r.date <= S.to) &&
     (S.flag === 'all' || (S.flag === 'flag' ? r.flags.length > 0 : r.flags.length === 0)) &&
     (!q || r.branch.toLowerCase().includes(q) || String(r.sheetRow) === q));
 }
@@ -79,8 +79,13 @@ document.addEventListener('click', (e) => { if (MS.open && !e.composedPath().inc
 
 // ---------- عناصر الفلترة ----------
 $('fSearch').addEventListener('input', (e) => { S.q = e.target.value; S.page = 1; refresh(); });
-$('fFrom').addEventListener('change', (e) => { S.from = e.target.value; S.page = 1; refresh(); });
-$('fTo').addEventListener('change', (e) => { S.to = e.target.value; S.page = 1; refresh(); });
+['input', 'change'].forEach((ev) => {
+  $('fFrom').addEventListener(ev, (e) => { S.from = e.target.value; S.page = 1; refresh(); });
+  $('fTo').addEventListener(ev, (e) => { S.to = e.target.value; S.page = 1; refresh(); });
+});
+// حدود خانات التاريخ = أول وآخر تاريخ في البيانات (حتى لا يُختار تاريخ خارج النطاق فلا يتغير شيء)
+function setDateBounds() { const d = ROWS.map((r) => r.date).sort(); if (!d.length) return; ['fFrom', 'fTo'].forEach((i) => { $(i).min = d[0]; $(i).max = d[d.length - 1]; }); }
+setDateBounds();
 $('fFlag').addEventListener('change', (e) => { S.flag = e.target.value; S.page = 1; refresh(); });
 $('sensTbl').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-m]'); if (!tr) return; S.mode = tr.dataset.m; S.excl = tr.dataset.x; $('fExcl').value = S.excl; S.page = 1; refresh(); });
 $('fExcl').addEventListener('change', (e) => { S.excl = e.target.value; S.page = 1; refresh(); });
@@ -238,7 +243,7 @@ applyTheme(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').match
 refresh();
 // استبدال البيانات بنسخة حيّة من الشيت مع الإبقاء على الفلاتر الحالية
 window.ARRIVE_setData = (raw) => {
-  ROWS = OCT.prep(raw); BRANCHES = branchList();
+  ROWS = OCT.prep(raw); BRANCHES = branchList(); setDateBounds();
   [...S.branches].forEach((b) => { if (!BRANCHES.includes(b)) S.branches.delete(b); });
   refresh();
 };
