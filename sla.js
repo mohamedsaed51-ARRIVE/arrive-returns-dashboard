@@ -33,7 +33,7 @@ const SLA_REFRESH_SEC = 600;
 
   // ---------- الحالة ----------
   let ROWS = [], META = { updatedAt: null, source: 'snap' };
-  const S = { q: '', branches: new Set(), statuses: new Set(), senders: new Set(), final: 'all', from: '', to: '', flag: 'all', mode: 'written', dup: 'all', thr: '', sort: { log: ['ret', -1], br: ['rows', -1], sd: ['rows', -1] }, page: 1, size: 25 };
+  const S = { q: '', branches: new Set(), statuses: new Set(), senders: new Set(), from: '', to: '', mode: 'written', dup: 'all', thr: '', sort: { log: ['ret', -1], br: ['rows', -1], sd: ['rows', -1] }, page: 1, size: 25 };
   let CUR = [], ALL = [];
 
   const days = (a, b) => (a && b ? Math.round((Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1, +b.slice(8, 10)) - Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10))) / 864e5) : null);
@@ -91,17 +91,14 @@ const SLA_REFRESH_SEC = 600;
     <div class="quick-actions"><button class="qa-btn" id="sReport" type="button">تقرير بالتصفية الحالية</button><button class="qa-btn" id="sReset" type="button">إعادة التصفية</button></div>
   </div>
   <div class="filter-bar"><div class="filter-wrap">
-    <div class="filter-head"><div class="filter-title">عوامل التصفية وطريقة الحساب</div><div class="filter-head-actions"><span class="result-count"><b id="sResultCount">0</b> نتيجة</span><button class="btn-reset" id="sReset2" type="button">مسح الفلاتر</button></div></div>
+    <div class="filter-head"><div class="filter-title">عوامل التصفية</div><div class="filter-head-actions"><span class="result-count"><b id="sResultCount">0</b> نتيجة</span><button class="btn-reset" id="sReset2" type="button">مسح الفلاتر</button></div></div>
     <div class="filter-grid">
       <div class="fgroup filter-search"><label for="sQ">بحث (رقم البوليصة أو الراسل)</label><input type="text" id="sQ" placeholder="اكتب للبحث…"></div>
       <div class="fgroup"><label>فرع المرتجع</label><div class="ms" id="sMsBranch"></div></div>
       <div class="fgroup"><label>حالة الشحنة</label><div class="ms" id="sMsStatus"></div></div>
       <div class="fgroup"><label>الراسل</label><div class="ms" id="sMsSender"></div></div>
-      <div class="fgroup"><label for="sFinal">الحالة النهائية</label><select id="sFinal"></select></div>
       <div class="fgroup"><label for="sFrom">تقفيل المرتجع من</label><input type="date" id="sFrom"></div>
       <div class="fgroup"><label for="sTo">تقفيل المرتجع إلى</label><input type="date" id="sTo"></div>
-      <div class="fgroup"><label for="sFlag">ملاحظات الجودة</label><select id="sFlag"><option value="all">كل الصفوف</option><option value="flag">عليها ملاحظة فقط</option><option value="clean">بدون ملاحظات فقط</option></select></div>
-      <div class="fgroup"><label for="sMode">أساس حساب العمر</label><select id="sMode"><option value="written">كما هو في عمود الشيت</option><option value="calc">محسوب: تاريخ تقفيل المرتجع − تاريخ التقفيل</option></select></div>
       <div class="fgroup"><label for="sDup">البوليصات المتكررة</label><select id="sDup"><option value="all">كل الصفوف (كما في الشيت)</option><option value="last">آخر ظهور لكل بوليصة</option><option value="first">أول ظهور لكل بوليصة</option></select></div>
       <div class="fgroup"><label for="sThr">حد الـ SLA (أيام)</label><input type="number" id="sThr" min="0" step="1" placeholder="غير محدد"></div>
     </div></div></div>
@@ -116,15 +113,15 @@ const SLA_REFRESH_SEC = 600;
       <div class="stub tone-under-action"><div class="stub-top"><div class="stub-main"><div class="stub-label">صفوف عليها ملاحظة جودة</div><div class="stub-value num" id="sK5">0</div></div></div><div class="stub-sub" id="sK5s">—</div></div>
     </section>
     <div class="section-heading"><h2><span class="tag">اتجاهات</span> الاتجاهات والتوزيعات</h2><span class="section-sub">اضغط على أي فرع داخل الرسم لتصفية اللوحة عليه</span></div>
-    <section class="panel-grid single"><div class="panel"><h3>المرتجعات المقفلة يوميًا ومتوسط عمرها</h3><div class="panel-sub">أعمدة: عدد المرتجعات حسب تاريخ تقفيل المرتجع — الخط: متوسط العمر (يوم)</div><div class="chart-wrap tall"><canvas id="sChDaily"></canvas></div></div></section>
+    <section class="panel-grid single"><div class="panel"><h3>المرتجعات المقفلة يوميًا ومتوسط عمرها</h3><div class="panel-sub">أعمدة: عدد المرتجعات حسب تاريخ تقفيل المرتجع — الخط: متوسط العمر (يوم). أيام أكتوبر في آخر الرسم تضم شحنات مقفلة في سبتمبر فقط، فارتفاع العمر فيها أثر نطاق الشيت وليس بالضرورة تدهورًا</div><div class="chart-wrap tall"><canvas id="sChDaily"></canvas></div></div></section>
     <section class="panel-grid halves">
       <div class="panel"><h3>توزيع عمر المرتجع</h3><div class="panel-sub">عدد المرتجعات في كل شريحة عمر (يوم)</div><div class="chart-wrap tall"><canvas id="sChDist"></canvas></div></div>
-      <div class="panel"><h3>متوسط العمر حسب الفرع</h3><div class="panel-sub">أعلى 12 فرعًا في متوسط العمر، والرقم بين القوسين عدد الصفوف</div><div class="chart-wrap tall"><canvas id="sChBranch"></canvas></div></div>
+      <div class="panel"><h3>متوسط العمر حسب الفرع</h3><div class="panel-sub">كل الفروع مرتبة بأعلى متوسط عمر، والرقم بين القوسين عدد الصفوف</div><div class="chart-wrap xl"><canvas id="sChBranch"></canvas></div></div>
     </section>
     <div class="section-heading"><h2><span class="tag">جودة</span> جودة البيانات وحساسية الأرقام</h2><span class="section-sub">الصفوف الأصلية لم تُعدّل. الملاحظات وسم فقط ويمكن تصفيتها</span></div>
     <section class="panel-grid halves">
       <div class="panel"><h3>الملاحظات المكتشفة</h3><div class="panel-sub">ضمن التصفية الحالية</div><div class="tbl-wrap"><table class="mini-table" id="sFlagTbl"></table></div></div>
-      <div class="panel"><h3>أثر أساس حساب العمر</h3><div class="panel-sub">نفس التصفية، والصف المظلل هو الاختيار الحالي</div><div class="tbl-wrap"><table class="mini-table" id="sSensTbl"></table></div><div class="hint" id="sSensHint"></div></div>
+      <div class="panel"><h3>أثر أساس حساب العمر</h3><div class="panel-sub">نفس التصفية — اضغط على الصف لاختيار أساس الحساب (المظلل هو الحالي)</div><div class="tbl-wrap"><table class="mini-table" id="sSensTbl"></table></div><div class="hint" id="sSensHint"></div></div>
     </section>
     <div class="section-heading"><h2><span class="tag">فروع</span> أداء الفروع</h2><span class="section-sub">اضغط على عنوان العمود للترتيب، واضغط على الصف لتصفية الفرع</span></div>
     <section class="table-panel"><div class="table-head-bar"><h3>ملخص الفروع</h3><span class="result-count"><b id="sBrCount">0</b> فرع</span></div>
@@ -175,9 +172,7 @@ const SLA_REFRESH_SEC = 600;
     ALL = ROWS.filter((r) =>
       (S.dup === 'all' || (S.dup === 'last' ? r.isLast : r.isFirst)) &&
       (!S.branches.size || S.branches.has(r.branch)) && (!S.statuses.size || S.statuses.has(r.status)) && (!S.senders.size || S.senders.has(r.sender)) &&
-      (S.final === 'all' || r.final === S.final) &&
       (!S.from || (r.ret && r.ret >= S.from)) && (!S.to || (r.ret && r.ret <= S.to)) &&
-      (S.flag === 'all' || (S.flag === 'flag' ? r.flags.length > 0 : r.flags.length === 0)) &&
       (!q || r.wb.toLowerCase().includes(q) || r.sender.toLowerCase().includes(q)));
     CUR = ALL;
   }
@@ -204,13 +199,13 @@ const SLA_REFRESH_SEC = 600;
       { type: 'bar', label: 'عدد المرتجعات', data: byDay.map((d) => d.rows), backgroundColor: p.blue, yAxisID: 'y' },
       { type: 'line', label: 'متوسط العمر (يوم)', data: byDay.map((d) => (d.avg == null ? null : +d.avg.toFixed(2))), borderColor: p.teal, backgroundColor: p.teal, yAxisID: 'y2', tension: .25, pointRadius: 3 }] },
       options: Object.assign({}, o, { scales: { x: { grid: { display: false } }, y: { grid: { color: p.line }, title: { display: true, text: 'صفوف' } }, y2: { position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'يوم' } } } }) });
-    const bk = [['1', (a) => a <= 1], ['2', (a) => a === 2], ['3', (a) => a === 3], ['4-5', (a) => a >= 4 && a <= 5], ['6-7', (a) => a >= 6 && a <= 7], ['8-10', (a) => a >= 8 && a <= 10], ['11-15', (a) => a >= 11 && a <= 15], ['16+', (a) => a >= 16]];
+    const bk = [['0-1', (a) => a <= 1], ['2', (a) => a === 2], ['3', (a) => a === 3], ['4-5', (a) => a >= 4 && a <= 5], ['6-7', (a) => a >= 6 && a <= 7], ['8-10', (a) => a >= 8 && a <= 10], ['11-15', (a) => a >= 11 && a <= 15], ['16+', (a) => a >= 16]];
     const ages = []; CUR.forEach((r) => { const a = ageOf(r); if (a != null) ages.push(a); });
     const t = thr();
     mk('sChDist', { type: 'bar', data: { labels: bk.map((b) => b[0]), datasets: [{ data: bk.map((b) => ages.filter(b[1]).length), backgroundColor: bk.map((b) => (t != null && !ages.filter(b[1]).every((a) => a <= t) ? p.bad : p.blue)) }] }, options: Object.assign({}, o, { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: p.line } } } }) });
-    const br = group(CUR, 'branch').filter((b) => b.avg != null).sort((a, b) => b.avg - a.avg).slice(0, 12);
+    const br = group(CUR, 'branch').filter((b) => b.avg != null).sort((a, b) => b.avg - a.avg);
     mk('sChBranch', { type: 'bar', data: { labels: br.map((b) => b.key + ' (' + fmt(b.rows) + ')'), datasets: [{ data: br.map((b) => +b.avg.toFixed(2)), backgroundColor: br.map((b) => (S.branches.has(b.key) ? p.teal : p.blue)) }] },
-      options: Object.assign({}, o, { indexAxis: 'y', plugins: { legend: { display: false } }, onClick: (ev, els) => { if (!els.length) return; const b = br[els[0].index].key; S.branches.has(b) ? S.branches.delete(b) : S.branches.add(b); S.page = 1; refresh(); }, scales: { x: { grid: { color: p.line } }, y: { grid: { display: false } } } }) });
+      options: Object.assign({}, o, { indexAxis: 'y', plugins: { legend: { display: false } }, onClick: (ev, els) => { if (!els.length) return; const b = br[els[0].index].key; S.branches.has(b) ? S.branches.delete(b) : S.branches.add(b); S.page = 1; refresh(); }, scales: { x: { grid: { color: p.line } }, y: { grid: { display: false }, ticks: { autoSkip: false } } } }) });
   }
 
   function renderKpis() {
@@ -229,8 +224,8 @@ const SLA_REFRESH_SEC = 600;
     $('sFlagTbl').innerHTML = '<thead><tr><th>الملاحظة</th><th class="num">عدد الصفوف</th><th>المعنى</th></tr></thead><tbody>' +
       (Object.keys(FL).filter((f) => cnt[f]).map((f) => '<tr><td>' + esc(FL[f][0]) + '</td><td class="num">' + fmt(cnt[f]) + '</td><td>' + esc(FL[f][1]) + '</td></tr>').join('') || '<tr><td colspan="3">لا توجد ملاحظات ضمن التصفية الحالية</td></tr>') + '</tbody>';
     const W = stats(CUR, (r) => (r.noDate ? null : r.ageS)), C = stats(CUR, (r) => (r.noDate ? null : r.ageC));
-    const row = (lb, T, on) => '<tr class="' + (on ? 'on' : '') + '"><td>' + lb + '</td><td class="num">' + f1(T.avg) + '</td><td class="num">' + f1(T.med) + '</td><td class="num">' + fmt(T.max) + '</td><td class="num">' + (T.rate == null ? '—' : pct(T.rate)) + '</td></tr>';
-    $('sSensTbl').innerHTML = '<thead><tr><th>أساس الحساب</th><th class="num">المتوسط</th><th class="num">الوسيط</th><th class="num">الأقصى</th><th class="num">داخل الحد</th></tr></thead><tbody>' + row('كما في الشيت', W, S.mode === 'written') + row('محسوب من التواريخ', C, S.mode === 'calc') + '</tbody>';
+    const row = (lb, T, on, m) => '<tr data-m="' + m + '" style="cursor:pointer" class="' + (on ? 'on' : '') + '"><td>' + lb + '</td><td class="num">' + f1(T.avg) + '</td><td class="num">' + f1(T.med) + '</td><td class="num">' + fmt(T.max) + '</td><td class="num">' + (T.rate == null ? '—' : pct(T.rate)) + '</td></tr>';
+    $('sSensTbl').innerHTML = '<thead><tr><th>أساس الحساب</th><th class="num">المتوسط</th><th class="num">الوسيط</th><th class="num">الأقصى</th><th class="num">داخل الحد</th></tr></thead><tbody>' + row('كما في الشيت', W, S.mode === 'written', 'written') + row('محسوب من التواريخ', C, S.mode === 'calc', 'calc') + '</tbody>';
     const diff = CUR.filter((r) => !r.noDate && r.ageS != null && r.ageS !== r.ageC).length;
     $('sSensHint').textContent = CUR.length ? fmt(diff) + ' صف يختلف فيه عمر الشيت عن المحسوب (منها فرق اليوم الواحد لنفس اليوم).' : '';
   }
@@ -270,10 +265,8 @@ const SLA_REFRESH_SEC = 600;
     if (S.branches.size) c.push(['الفرع: ' + [...S.branches].join('، '), () => S.branches.clear()]);
     if (S.statuses.size) c.push(['الحالة: ' + [...S.statuses].join('، '), () => S.statuses.clear()]);
     if (S.senders.size) c.push(['الراسل: ' + [...S.senders].slice(0, 3).join('، ') + (S.senders.size > 3 ? '…' : ''), () => S.senders.clear()]);
-    if (S.final !== 'all') c.push(['الحالة النهائية: ' + S.final, () => { S.final = 'all'; $('sFinal').value = 'all'; }]);
     if (S.from) c.push(['من ' + dmy(S.from), () => { S.from = ''; $('sFrom').value = ''; }]);
     if (S.to) c.push(['إلى ' + dmy(S.to), () => { S.to = ''; $('sTo').value = ''; }]);
-    if (S.flag !== 'all') c.push([S.flag === 'flag' ? 'عليها ملاحظة' : 'بدون ملاحظات', () => { S.flag = 'all'; $('sFlag').value = 'all'; }]);
     if (S.dup !== 'all') c.push([S.dup === 'last' ? 'آخر ظهور لكل بوليصة' : 'أول ظهور لكل بوليصة', () => { S.dup = 'all'; $('sDup').value = 'all'; }]);
     if (S.q.trim()) c.push(['بحث: ' + S.q, () => { S.q = ''; $('sQ').value = ''; }]);
     const bar = $('sActive');
@@ -290,17 +283,14 @@ const SLA_REFRESH_SEC = 600;
     drawCharts();
   }
   function resetAll() {
-    S.branches.clear(); S.statuses.clear(); S.senders.clear(); S.final = 'all'; S.from = S.to = ''; S.flag = 'all'; S.dup = 'all'; S.q = ''; S.page = 1;
-    ['sQ', 'sFrom', 'sTo'].forEach((i) => ($(i).value = '')); $('sFinal').value = 'all'; $('sFlag').value = 'all'; $('sDup').value = 'all';
+    S.branches.clear(); S.statuses.clear(); S.senders.clear(); S.from = S.to = ''; S.dup = 'all'; S.q = ''; S.page = 1;
+    ['sQ', 'sFrom', 'sTo'].forEach((i) => ($(i).value = '')); $('sDup').value = 'all';
     refresh();
   }
 
   // ---------- تحميل البيانات ----------
   function setData(j, source) {
     ROWS = decode(j); META = { updatedAt: j.updatedAt, source };
-    const finals = [...new Set(ROWS.map((r) => r.final))].sort((a, b) => a.localeCompare(b, 'ar'));
-    $('sFinal').innerHTML = '<option value="all">كل الحالات</option>' + finals.map((f) => '<option value="' + esc(f) + '">' + esc(f) + '</option>').join('');
-    $('sFinal').value = finals.includes(S.final) ? S.final : (S.final = 'all');
     [S.branches, S.statuses, S.senders].forEach((set, i) => { const ok = new Set([opts.branch, opts.status, opts.sender][i]()); [...set].forEach((v) => { if (!ok.has(v)) set.delete(v); }); });
     const rets = ROWS.map((r) => r.ret).filter(Boolean).sort();
     META.period = rets.length ? dmy(rets[0]) + ' — ' + dmy(rets[rets.length - 1]) : '';
@@ -364,9 +354,7 @@ const SLA_REFRESH_SEC = 600;
     on('sQ', 'input', (e) => { S.q = e.target.value; S.page = 1; refresh(); });
     on('sFrom', 'change', (e) => { S.from = e.target.value; S.page = 1; refresh(); });
     on('sTo', 'change', (e) => { S.to = e.target.value; S.page = 1; refresh(); });
-    on('sFinal', 'change', (e) => { S.final = e.target.value; S.page = 1; refresh(); });
-    on('sFlag', 'change', (e) => { S.flag = e.target.value; S.page = 1; refresh(); });
-    on('sMode', 'change', (e) => { S.mode = e.target.value; refresh(); });
+    on('sSensTbl', 'click', (e) => { const tr = e.target.closest('tr[data-m]'); if (!tr || tr.dataset.m === S.mode) return; S.mode = tr.dataset.m; refresh(); });
     on('sDup', 'change', (e) => { S.dup = e.target.value; S.page = 1; refresh(); });
     on('sThr', 'input', (e) => { S.thr = e.target.value.trim(); refresh(); });
     $('sReset').onclick = resetAll; $('sReset2').onclick = resetAll;

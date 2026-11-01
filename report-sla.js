@@ -10,13 +10,13 @@
   const p1 = (x) => (x == null ? '—' : (x * 100).toFixed(1) + '%');
   const sgn = (b, a, d) => (a == null || b == null ? '—' : (b - a >= 0 ? '+' : '−') + Math.abs(b - a).toFixed(d == null ? 1 : d));
   const BUCKETS = [['1 يوم أو أقل', (a) => a <= 1], ['2', (a) => a === 2], ['3', (a) => a === 3], ['4-5', (a) => a >= 4 && a <= 5], ['6-7', (a) => a >= 6 && a <= 7], ['8-10', (a) => a >= 8 && a <= 10], ['11-15', (a) => a >= 11 && a <= 15], ['16 فأكثر', (a) => a >= 16]];
-  const MIN_BR = 30; // أقل عدد صفوف لإدراج الفرع في ترتيب «أعلى متوسط عمر» حتى لا تضلل العينات الصغيرة
 
   function build() {
     const X = A.state(), S = X.S, CUR = X.CUR, ALL = X.ALL, FL = X.FL, UNKNOWN = X.UNKNOWN;
     const T = X.stats(CUR, X.ageOf), t = X.thr();
     const rets = CUR.map((r) => r.ret).filter(Boolean).sort();
     const periodTxt = rets.length ? dmy(rets[0]) + ' ← ' + dmy(rets[rets.length - 1]) : MISSING;
+    const cl = CUR.map((r) => r.close).filter(Boolean).sort(), closeTxt = cl.length ? dmy(cl[0]) + ' ← ' + dmy(cl[cl.length - 1]) : MISSING;
     const ctx = { title: 'تقرير SLA المرتجعات', period: 'تقفيل المرتجع: ' + periodTxt };
     const modeTxt = S.mode === 'calc' ? 'محسوب: تاريخ تقفيل المرتجع − تاريخ التقفيل' : 'كما في عمود «عمر المرتجع» بالشيت';
     const thrTxt = t == null ? 'غير محدد بالمصدر (لم يُدخل حد معتمد، فلا يُصدر حكم داخل/خارج الحد)' : t + ' يوم (داخل الحد = العمر ≤ ' + t + ')';
@@ -25,9 +25,7 @@
     if (S.branches.size) chips.push('الفرع: ' + [...S.branches].map(esc).join('، '));
     if (S.statuses.size) chips.push('الحالة: ' + [...S.statuses].map(esc).join('، '));
     if (S.senders.size) chips.push('الراسل: ' + [...S.senders].slice(0, 4).map(esc).join('، ') + (S.senders.size > 4 ? ' و' + (S.senders.size - 4) + ' آخرين' : ''));
-    if (S.final !== 'all') chips.push('الحالة النهائية: ' + esc(S.final));
     if (S.from || S.to) chips.push('تقفيل المرتجع: ' + (S.from ? dmy(S.from) : 'البداية') + ' إلى ' + (S.to ? dmy(S.to) : 'النهاية'));
-    if (S.flag !== 'all') chips.push(S.flag === 'flag' ? 'الصفوف الموسومة فقط' : 'الصفوف السليمة فقط');
     if (S.dup !== 'all') chips.push(S.dup === 'last' ? 'آخر ظهور لكل بوليصة' : 'أول ظهور لكل بوليصة');
     if (S.q.trim()) chips.push('بحث: ' + esc(S.q.trim()));
     const filt = chips.length ? chips.join('، ') : 'لا توجد (كل الصفوف)';
@@ -39,7 +37,7 @@
     const br = X.group(CUR, 'branch'), sd = X.group(CUR, 'sender');
     const uniq = new Set(CUR.map((r) => r.wb)).size;
     const byAge = br.filter((b) => b.avg != null).sort((a, b) => b.avg - a.avg || b.rows - a.rows);
-    const brRank = byAge.filter((b) => b.rows >= MIN_BR);
+    const brRank = byAge;
     const daysG = X.group(CUR.filter((r) => r.ret), 'ret').sort((a, b) => a.key.localeCompare(b.key));
     const ages = []; CUR.forEach((r) => { const a = X.ageOf(r); if (a != null) ages.push(a); });
     const pages = [];
@@ -49,6 +47,7 @@
       '<h1>تقرير SLA المرتجعات<br>عمر المرتجع حتى التقفيل</h1><div class="rp-cover-rule"></div><dl class="rp-cover-meta">' +
       '<div><dt>الفترة المشمولة</dt><dd class="num">' + periodTxt + '</dd></div>' +
       '<div><dt>عدد الصفوف</dt><dd><span class="num">' + L(T.rows) + '</span> صف · <span class="num">' + L(uniq) + '</span> بوليصة · <span class="num">' + L(br.length) + '</span> فرع</dd></div>' +
+      '<div><dt>نطاق تقفيل الشحنة</dt><dd class="num">' + closeTxt + '</dd></div>' +
       '<div><dt>عوامل التصفية</dt><dd>' + filt + '</dd></div>' +
       '<div><dt>أساس حساب العمر</dt><dd>' + esc(modeTxt) + '</dd></div>' +
       '<div><dt>حد الـ SLA</dt><dd>' + esc(thrTxt) + '</dd></div>' +
@@ -64,13 +63,13 @@
     const bars = brRank.slice(0, 6);
     pages.push(page(head('الملخص التنفيذي', ctx) +
       '<div class="rp-kpis">' + kpi('عدد المرتجعات', L(T.rows), 'tone-brand') + kpi('متوسط العمر (يوم)', f1(T.avg), '') +
-      kpi('داخل حد الـ SLA', t == null ? '—' : p1(T.rate), t == null ? '' : (T.rate >= 0.9 ? 'tone-success' : 'tone-under-action')) + kpi('خارج الحد', t == null ? '—' : L(T.late), t == null ? '' : 'tone-violation') + '</div>' +
+      kpi('داخل حد الـ SLA', t == null ? '—' : p1(T.rate), t == null ? '' : 'tone-success') + kpi('خارج الحد', t == null ? '—' : L(T.late), t == null ? '' : 'tone-violation') + '</div>' +
       '<p class="rp-note">الوسيط ' + f1(T.med) + ' يوم · الأقصى ' + L(T.max) + ' يوم · ' + L(T.n) + ' صفًا لها عمر مقروء' + (noAge ? ' و' + L(noAge) + ' صفًا بلا عمر (مستبعدة من المتوسط)' : '') + '. ' +
       (t == null ? 'لم يُحدد حد SLA معتمد، لذلك لا يُحكم على الالتزام.' : 'داخل الحد = ' + L(T.within) + ' من ' + L(T.n) + '.') + '</p>' +
       '<div class="rp-cols"><div><h3>ما يحتاج انتباه الإدارة</h3>' +
       (att.length ? table([{ t: 'البند' }, { t: 'الصفوف', num: true, w: '20mm' }], att.map((a) => '<tr><td>' + esc(a[0]) + '</td><td class="num">' + L(a[1]) + '</td></tr>').join(''), 'rp-compact') : '<p class="rp-note">لا توجد ملاحظات جودة ضمن التصفية الحالية.</p>') +
       '<h3>مقارنة داخل الفترة نفسها</h3>' + halves(X, daysG, t) + '</div>' +
-      '<div><h3>أعلى الفروع في متوسط العمر</h3>' + (bars.length ? '<div class="rp-bars">' + bars.map((b) => '<div class="rp-bar-row"><span class="n">' + esc(b.key) + '</span><span class="tr"><span class="fl" style="width:' + Math.max(3, Math.round(b.avg / bars[0].avg * 100)) + '%"></span></span><span class="num">' + f1(b.avg) + '</span></div>').join('') + '</div><p class="rp-note">فروع بـ ' + MIN_BR + ' صفًا فأكثر.</p>' : '<p class="rp-note">لا يوجد فرع بـ ' + MIN_BR + ' صفًا فأكثر ضمن التصفية.</p>') +
+      '<div><h3>أعلى الفروع في متوسط العمر</h3>' + (bars.length ? '<div class="rp-bars">' + bars.map((b) => '<div class="rp-bar-row"><span class="n">' + esc(b.key) + '</span><span class="tr"><span class="fl" style="width:' + Math.max(3, Math.round(b.avg / bars[0].avg * 100)) + '%"></span></span><span class="num">' + f1(b.avg) + '</span></div>').join('') + '</div><p class="rp-note">أعلى 6 فروع؛ كل الفروع بعددها في قسم الرسوم وجدول الفروع.</p>' : '<p class="rp-note">لا توجد بيانات عمر للفروع ضمن التصفية.</p>') +
       '<div class="rp-facts"><div><span>صفوف بوليصاتها متكررة بين التابات</span><b class="num">' + L(dupRows) + '</b></div>' +
       '<div><span>بوليصات مميزة</span><b class="num">' + L(uniq) + '</b></div>' +
       '<div><span>متوسط العمر «كما في الشيت»</span><b class="num">' + f1(X.stats(CUR, (r) => (r.noDate ? null : r.ageS)).avg) + '</b></div>' +
@@ -85,13 +84,13 @@
     const bcnt = BUCKETS.map((b) => ages.filter(b[1]).length);
     const imgDist = chartImg({ type: 'bar', data: { labels: BUCKETS.map((b) => b[0]), datasets: [{ data: bcnt, backgroundColor: BUCKETS.map((b) => (t != null && !ages.filter(b[1]).every((a) => a <= t) ? COL.bad : COL.blue)) }] },
       options: (f) => ({ plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: axis(f, { grid: { display: false } }), y: axis(f, { beginAtZero: true }) } }) }, 480, 420);
-    const top10 = brRank.slice(0, 10);
+    const top10 = brRank;
     const imgBr = chartImg({ type: 'bar', data: { labels: top10.map((b) => b.key + ' (' + L(b.rows) + ')'), datasets: [{ data: top10.map((b) => +b.avg.toFixed(2)), backgroundColor: COL.blue }] },
-      options: (f) => ({ indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: axis(f, { beginAtZero: true }), y: axis(f, { grid: { display: false } }) } }) }, 480, 420);
+      options: (f) => ({ indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: axis(f, { beginAtZero: true }), y: axis(f, { grid: { display: false }, ticks: { color: '#475569', font: f, autoSkip: false, maxRotation: 0 } }) } }) }, 480, Math.max(420, top10.length * 30 + 60));
     const fig = (ti, sub, src) => '<div class="rp-fig"><div class="rp-cap"><b>' + ti + '</b><span>' + sub + '</span></div>' + (src ? '<img src="' + src + '" alt="' + ti + '">' : '<div class="rp-note">تعذّر رسم الرسم (مكتبة الرسوم غير محمّلة)</div>') + '</div>';
-    pages.push(page(head('الرسوم البيانية', ctx) + fig('المرتجعات اليومية ومتوسط عمرها', 'عدد المرتجعات حسب تاريخ تقفيل المرتجع، والخط متوسط العمر (يوم)', imgDaily) +
+    pages.push(page(head('الرسوم البيانية', ctx) + fig('المرتجعات اليومية ومتوسط عمرها', 'عدد المرتجعات حسب تاريخ تقفيل المرتجع، والخط متوسط العمر (يوم). أيام أكتوبر تضم شحنات مقفلة في سبتمبر فقط، فارتفاع العمر فيها أثر نطاق الشيت', imgDaily) +
       '<div class="rp-two">' + fig('توزيع عمر المرتجع', 'عدد المرتجعات في كل شريحة عمر (يوم)' + (t != null ? ' — الأحمر يتجاوز الحد' : ''), imgDist) +
-      fig('أعلى 10 فروع في متوسط العمر', 'فروع بـ ' + MIN_BR + ' صفًا فأكثر، والرقم بين القوسين عدد الصفوف', imgBr) + '</div>' + foot()));
+      fig('متوسط العمر حسب الفرع', 'كل الفروع مرتبة بأعلى متوسط، والرقم بين القوسين عدد الصفوف', imgBr) + '</div>' + foot()));
 
     // 4) توزيع العمر
     const tot = ages.length || 1;
@@ -151,6 +150,7 @@
       '<li>الصفوف بلا تاريخ صالح لا تدخل في حساب العمر (' + L(noAge) + ' في هذا التقرير).</li></ul><h3>حدود التقرير</h3><ul>' +
       '<li>الصفوف لم تُعدَّل؛ وسوم الجودة للتنبيه فقط، وأسماء الفروع موحّدة للعرض فقط.</li>' +
       '<li>البوليصات المتكررة بين التابات ' + (S.dup === 'all' ? 'مُدرجة كلها (كما في الشيت)' : 'مفلترة حسب الخيار المحدد') + '، وقد تضخّم العدد إن كانت إدخالًا مكررًا.</li>' +
+      '<li>النطاق: صفوف شيت «Sla RTO» التي لها تاريخ تقفيل مرتجع فقط (كل الصفوف المحمّلة لها تاريخ). المرتجعات التي لم تُقفل بعد غير ظاهرة، فالأعمار الطويلة قد تكون أقل من الواقع.</li>' +
       '<li>لا توجد بيانات لفترة سابقة في المصدر، والمقارنة الواردة بين نصفي الفترة المختارة وليست مع شهر سابق.</li>' +
       '<li>الإجراءات الواردة مقترحة وتحتاج اعتماد الإدارة قبل اعتبارها قرارًا.</li></ul>' +
       '<div class="rp-sign"><div><span>إعداد</span><i></i></div><div><span>مراجعة</span><i></i></div><div><span>اعتماد</span><i></i></div></div><div class="rp-end">نهاية التقرير</div></div>' + foot()));
@@ -176,8 +176,8 @@
     const out = [], T = x.T, t = x.t;
     if (t == null) out.push(['حد الـ SLA غير معتمد في المصدر', 'لا يمكن الحكم على الالتزام (داخل/خارج الحد). متوسط العمر ' + f1(T.avg) + ' يوم، الوسيط ' + f1(T.med) + '، الأقصى ' + L(T.max) + '.', 'اعتماد حد SLA للمرتجعات ثم إدخاله في فلتر «حد الـ SLA» لإعادة إصدار التقرير.']);
     else out.push(['الالتزام بحد الـ SLA (' + t + ' يوم)', L(T.within) + ' من ' + L(T.n) + ' (' + p1(T.rate) + ') داخل الحد، و' + L(T.late) + ' خارجه.', T.late ? 'مراجعة المرتجعات خارج الحد بدءًا من الأقدم (قسم أقدم المرتجعات).' : 'متابعة دورية.']);
-    const hi = x.brRank.filter((b) => T.avg != null && b.avg >= T.avg + 1).slice(0, 4);
-    if (hi.length) out.push(['فروع متوسط عمرها أعلى من المتوسط العام بيوم فأكثر (30 صفًا فأكثر)', hi.map((b) => esc(b.key) + ' ' + f1(b.avg) + ' يوم من ' + L(b.rows)).join('، ') + ' مقابل المتوسط العام ' + f1(T.avg) + '.', 'مقارنة مراحل المرتجع في هذه الفروع (الاستلام ← التقفيل).']);
+    const hi = x.brRank.filter((b) => T.avg != null && b.avg >= T.avg + 1).slice(0, 6);
+    if (hi.length) out.push(['فروع متوسط عمرها أعلى من المتوسط العام بيوم فأكثر (مع عدد صفوف كل فرع)', hi.map((b) => esc(b.key) + ' ' + f1(b.avg) + ' يوم من ' + L(b.rows)).join('، ') + ' مقابل المتوسط العام ' + f1(T.avg) + '.', 'مقارنة مراحل المرتجع في هذه الفروع (الاستلام ← التقفيل).']);
     if (x.t != null) {
       const lateBr = x.X.group(x.X.CUR, 'branch').filter((b) => b.late > 0).sort((a, b) => b.late - a.late).slice(0, 3);
       if (lateBr.length && T.late) { const s = lateBr.reduce((a, b) => a + b.late, 0); out.push(['تركّز المرتجعات خارج الحد في فروع محددة', lateBr.map((b) => esc(b.key) + ' (' + L(b.late) + ')').join('، ') + ' = ' + L(s) + ' مرتجعًا، أي ' + p1(s / T.late) + ' مما خارج الحد.', 'متابعة هذه الفروع أولًا.']); }
