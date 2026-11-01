@@ -43,7 +43,7 @@
     </div>
   </div>
 </header>
-<nav class="view-tabs" role="tablist" aria-label="أقسام اللوحة"><button class="view-tab" role="tab" data-view="match" aria-selected="true" type="button">مطابقة المرتجعات</button><button class="view-tab" role="tab" data-view="sla" aria-selected="false" type="button">SLA المرتجعات</button></nav>
+<nav class="view-tabs" role="tablist" aria-label="أقسام اللوحة"><button class="view-tab" role="tab" data-view="match" aria-selected="true" type="button">مطابقة المرتجعات</button><button class="view-tab" role="tab" data-view="sla" aria-selected="false" type="button">SLA المرتجعات</button><button class="view-tab" role="tab" data-view="quality" aria-selected="false" type="button">جودة البيانات</button></nav>
 <div id="view-match">
 
 <div class="control-bar">
@@ -78,8 +78,6 @@
     <div class="fgroup"><label>الفرع</label><div class="ms" id="msBranch"></div></div>
     <div class="fgroup"><label for="fFrom">من تاريخ</label><input type="date" id="fFrom"></div>
     <div class="fgroup"><label for="fTo">إلى تاريخ</label><input type="date" id="fTo"></div>
-    <div class="fgroup"><label for="fFlag">ملاحظات الجودة</label>
-      <select id="fFlag"><option value="all">كل الصفوف</option><option value="flag">عليها ملاحظة جودة فقط</option><option value="clean">بدون ملاحظات فقط</option></select></div>
     <div class="fgroup"><label for="fExcl">الصفوف المكررة / المتابعة</label>
       <select id="fExcl"><option value="no">إدراج كل الصفوف (كما في الشيت)</option><option value="yes">استبعاد المكرر المتطابق وصفوف المتابعة</option></select></div>
   </div>
@@ -97,7 +95,6 @@
     <div class="stub tone-violation"><div class="stub-top"><div class="stub-ic" id="ic-k2"></div><div class="stub-main"><div class="stub-label">غير المستلم</div><div class="stub-value num" id="kUn">0</div></div></div><div class="stub-sub" id="kUnSub">—</div></div>
     <div class="stub tone-success"><div class="stub-top"><div class="stub-ic" id="ic-k3"></div><div class="stub-main"><div class="stub-label">نسبة المطابقة</div><div class="stub-value num" id="kRate">0</div><div class="stub-pct num" id="kRatePct">—</div></div></div><div class="stub-sub" id="kRateSub">—</div></div>
     <div class="stub tone-in-progress"><div class="stub-top"><div class="stub-ic" id="ic-k4"></div><div class="stub-main"><div class="stub-label">شحنات «غير مدرجة»</div><div class="stub-value num" id="kEx">0</div></div></div><div class="stub-sub" id="kExSub">—</div></div>
-    <div class="stub tone-under-action"><div class="stub-top"><div class="stub-ic" id="ic-k5"></div><div class="stub-main"><div class="stub-label">صفوف عليها ملاحظة جودة</div><div class="stub-value num" id="kFl">0</div></div></div><div class="stub-sub" id="kFlSub">—</div></div>
   </section>
 
   <div class="section-heading">
@@ -113,11 +110,10 @@
   </section>
 
   <div class="section-heading">
-    <h2><span class="tag">جودة</span> جودة البيانات وحساسية الأرقام</h2>
-    <span class="section-sub">الصفوف الأصلية لم تُعدّل. كل ملاحظة معلَّمة على الصف ويمكنك استبعادها أو إبقاؤها من عوامل التصفية</span>
+    <h2><span class="tag">حساسية</span> حساسية الأرقام لطريقة الحساب</h2>
+    <span class="section-sub">مشاكل البيانات وصفوفها في تاب «جودة البيانات»</span>
   </div>
-  <section class="panel-grid halves">
-    <div class="panel"><h3>الملاحظات المكتشفة</h3><div class="panel-sub">ضمن الفرع والتاريخ المختارين</div><div class="tbl-wrap"><table class="mini-table" id="flagTbl"></table></div></div>
+  <section class="panel-grid single">
     <div class="panel"><h3>أثر طريقة الحساب على النسبة</h3><div class="panel-sub">نفس الفرع والتاريخ المختارين — اضغط على الصف لاختيار أساس الحساب (المظلل هو الحالي)</div><div class="tbl-wrap"><table class="mini-table" id="sensTbl"></table></div><div class="hint" id="sensHint"></div></div>
   </section>
 
@@ -142,7 +138,7 @@
     <div class="table-scroll"><table id="logTbl"><thead><tr>
       <th data-k="sheetRow">صف الشيت <span class="arrow"></span></th><th data-k="date">التاريخ <span class="arrow"></span></th><th data-k="branch">الفرع <span class="arrow"></span></th>
       <th data-k="sent">المرسل <span class="arrow"></span></th><th data-k="recv">المستلم <span class="arrow"></span></th><th data-k="un">غير المستلم <span class="arrow"></span></th>
-      <th data-k="extra">غير مدرجة <span class="arrow"></span></th><th data-k="status">حالة المطابقة <span class="arrow"></span></th><th data-k="nflags">الملاحظات <span class="arrow"></span></th></tr></thead><tbody id="logBody"></tbody></table></div>
+      <th data-k="extra">غير مدرجة <span class="arrow"></span></th><th data-k="status">حالة المطابقة <span class="arrow"></span></th></tr></thead><tbody id="logBody"></tbody></table></div>
     <div class="pager"><div class="pager-info" id="pgInfo"></div><div class="pager-ctl">
       <button class="pg-btn" id="pgPrev" type="button">السابق</button><span class="pager-info"><b id="pgNow">1</b> / <b id="pgAll">1</b></span><button class="pg-btn" id="pgNext" type="button">التالي</button>
       <select id="pgSize"><option>25</option><option>50</option><option>100</option></select></div></div>
@@ -156,6 +152,7 @@
 </main>
 </div>
 <div id="view-sla" hidden></div>
+<div id="view-quality" hidden></div>
 
 <footer class="enterprise-footer">
   <div class="footer-brand-row"><img src="arrive-logo-white.png" alt="ARRIVE"><span class="footer-brand-text">ARRIVE — المراجعة التشغيلية</span><span class="footer-version-pill">Returns Matching · Oct 2026</span></div>
@@ -167,10 +164,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="data.js"></script>
 <script src="core.js"></script>
-<script src="app.js?v=5"></script>
-<script src="report.js?v=4"></script>
+<script src="app.js?v=6"></script>
+<script src="report.js?v=5"></script>
 <script src="live.js"></script>
-<script src="sla.js?v=10"></script>
+<script src="sla.js?v=11"></script>
 <script src="report-sla.js?v=5"></script>
+<script src="quality.js?v=2"></script>
 </body>
 </html>

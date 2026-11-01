@@ -39,7 +39,6 @@
     const chips = [];
     if (S.branches.size) chips.push('الفروع: ' + [...S.branches].map(esc).join('، '));
     if (S.from || S.to) chips.push('الفترة: ' + (S.from ? dmy(S.from) : 'البداية') + ' إلى ' + (S.to ? dmy(S.to) : 'النهاية'));
-    if (S.flag !== 'all') chips.push(S.flag === 'flag' ? 'الصفوف الموسومة فقط' : 'الصفوف السليمة فقط');
     if (S.excl === 'yes') chips.push('استبعاد المكرر/المتابعة');
     if (S.q.trim()) chips.push('بحث: ' + esc(S.q.trim()));
     const modeTxt = mode === 'calc' ? 'محسوب: المرسل − (المستلم − غير المدرجة)' : 'كما في عمود الشيت';

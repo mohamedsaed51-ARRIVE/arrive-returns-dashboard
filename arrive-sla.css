@@ -3,7 +3,7 @@
 .view-tab{appearance:none;background:none;border:0;border-bottom:3px solid transparent;padding:12px 18px;font:inherit;font-weight:700;font-size:var(--fs-small);color:var(--ink-soft);cursor:pointer}
 .view-tab:hover{color:var(--arrive-blue)}
 .view-tab[aria-selected="true"]{color:var(--arrive-blue);border-bottom-color:var(--arrive-blue)}
-#view-sla[hidden],#view-match[hidden]{display:none}
+#view-sla[hidden],#view-match[hidden],#view-quality[hidden]{display:none}
 .sla-thr{display:flex;gap:8px;align-items:center}
 .sla-thr input{width:100%}
 .badge.sla-in{background:var(--status-success-bg);color:var(--status-success-fg)}

@@ -58,6 +58,7 @@ function doGet() {
           iso_(r[idx.retClose], tz),
           /^-?\d+$/.test(age) ? Number(age) : null,
           id('tabs', tab),
+          i + 1,                       // رقم الصف في التاب (لتحديد موضع كل مشكلة في تاب الجودة)
         ]);
       }
     });

@@ -35,7 +35,7 @@ const setIc = (id, n) => { const e = $(id); if (e) e.innerHTML = svg(n); };
 // ---------- الحالة ----------
 const branchList = () => [...new Set(ROWS.map((r) => r.branch))].sort((a, b) => a.localeCompare(b, 'ar'));
 let BRANCHES = branchList();
-const S = { branches: new Set(), from: '', to: '', flag: 'all', mode: 'written', excl: 'no', q: '', sort: { log: ['sheetRow', 1], br: ['sent', -1] }, page: 1, size: 25 };
+const S = { branches: new Set(), from: '', to: '', mode: 'written', excl: 'no', q: '', sort: { log: ['sheetRow', 1], br: ['sent', -1] }, page: 1, size: 25 };
 const dayOf = (iso) => (iso ? Number(iso.slice(8, 10)) : null);
 
 function baseRows() {
@@ -43,7 +43,6 @@ function baseRows() {
   return ROWS.filter((r) =>
     (S.branches.size === 0 || S.branches.has(r.branch)) &&
     (!S.from || r.date >= S.from) && (!S.to || r.date <= S.to) &&
-    (S.flag === 'all' || (S.flag === 'flag' ? r.flags.length > 0 : r.flags.length === 0)) &&
     (!q || r.branch.toLowerCase().includes(q) || String(r.sheetRow) === q));
 }
 const isDup = (r) => r.flags.some((x) => OCT.DUP.includes(x));
@@ -86,12 +85,11 @@ $('fSearch').addEventListener('input', (e) => { S.q = e.target.value; S.page = 1
 // حدود خانات التاريخ = أول وآخر تاريخ في البيانات (حتى لا يُختار تاريخ خارج النطاق فلا يتغير شيء)
 function setDateBounds() { const d = ROWS.map((r) => r.date).sort(); if (!d.length) return; ['fFrom', 'fTo'].forEach((i) => { $(i).min = d[0]; $(i).max = d[d.length - 1]; }); }
 setDateBounds();
-$('fFlag').addEventListener('change', (e) => { S.flag = e.target.value; S.page = 1; refresh(); });
 $('sensTbl').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-m]'); if (!tr) return; S.mode = tr.dataset.m; S.excl = tr.dataset.x; $('fExcl').value = S.excl; S.page = 1; refresh(); });
 $('fExcl').addEventListener('change', (e) => { S.excl = e.target.value; S.page = 1; refresh(); });
 function resetAll() {
-  S.branches.clear(); S.from = S.to = ''; S.flag = 'all'; S.excl = 'no'; S.q = ''; S.page = 1;
-  $('fExcl').value = 'no'; $('fSearch').value = ''; $('fFrom').value = ''; $('fTo').value = ''; $('fFlag').value = 'all';
+  S.branches.clear(); S.from = S.to = ''; S.excl = 'no'; S.q = ''; S.page = 1;
+  $('fExcl').value = 'no'; $('fSearch').value = ''; $('fFrom').value = ''; $('fTo').value = '';
   refresh();
 }
 $('btnReset').onclick = resetAll; $('qaReset').onclick = resetAll;
@@ -142,22 +140,13 @@ function renderKpis() {
   $('kRateSub').textContent = '(المرسل − غير المستلم) ÷ المرسل';
   $('kEx').textContent = fmt(T.extra);
   $('kExSub').textContent = 'مستلمة بدون إرسال مسجّل';
-  $('kFl').textContent = fmt(T.flagged);
-  const d = CUR.filter(isDup).length;
-  $('kFlSub').textContent = T.rows ? pct(T.flagged / T.rows) + ' من الصفوف · ' + fmt(d) + ' مكرر/متابعة' : '—';
   $('metaRows').textContent = fmt(T.rows);
   $('metaBranches').textContent = fmt(new Set(CUR.map((r) => r.branch)).size);
   $('metaDays').textContent = fmt(T.days);
   const ds = CUR.map((r) => r.date).sort();
   $('rangeTxt').textContent = ds.length ? dmy(ds[0]) + ' – ' + dmy(ds[ds.length - 1]) : 'لا توجد بيانات';
 }
-function renderQuality() {
-  const m = new Map();
-  ALL.forEach((r) => r.flags.forEach((f) => { const o = m.get(f) || { n: 0, sent: 0 }; o.n++; o.sent += r.sent; m.set(f, o); }));
-  const rows = [...m].sort((a, b) => b[1].n - a[1].n);
-  $('flagTbl').innerHTML = '<thead><tr><th>الملاحظة</th><th class="num">صفوف</th><th class="num">مرسل</th></tr></thead><tbody>' +
-    (rows.length ? rows.map(([f, o]) => '<tr title="' + esc(FL[f] ? FL[f][1] : '') + '"><td><span class="flag-pill' + (FL[f] && FL[f][2] ? ' dup' : '') + '">' + esc(flName(f)) + '</span><div class="hint" style="margin:2px 0 0">' + esc(FL[f] ? FL[f][1] : '') + '</div></td><td class="num">' + fmt(o.n) + '</td><td class="num">' + fmt(o.sent) + '</td></tr>').join('')
-      : '<tr><td colspan="3" style="text-align:center;padding:18px;color:var(--ink-faint)">لا توجد ملاحظات ضمن التصفية الحالية</td></tr>') + '</tbody>';
+function renderSensitivity() {
   const noDup = ALL.filter((r) => !isDup(r));
   const combos = [['written', 'no', 'كما في الشيت · كل الصفوف'], ['written', 'yes', 'كما في الشيت · بدون مكرر/متابعة'], ['calc', 'no', 'محسوب · كل الصفوف'], ['calc', 'yes', 'محسوب · بدون مكرر/متابعة']];
   $('sensTbl').innerHTML = '<thead><tr><th>الحالة</th><th class="num">مرسل</th><th class="num">غير مستلم</th><th class="num">النسبة</th></tr></thead><tbody>' +
@@ -178,7 +167,7 @@ function renderBranches() {
   markArrows('brTbl', S.sort.br);
 }
 function renderLog() {
-  const rows = CUR.map((r) => Object.assign({}, r, { un: OCT.unrecvOf(r, S.mode), nflags: r.flags.length }));
+  const rows = CUR.map((r) => Object.assign({}, r, { un: OCT.unrecvOf(r, S.mode) }));
   const [k, d] = S.sort.log;
   const sorted = sortBy(rows, k, d);
   const pages = Math.max(1, Math.ceil(sorted.length / S.size));
@@ -188,10 +177,9 @@ function renderLog() {
   $('logBody').innerHTML = slice.length ? slice.map((r) => {
     const full = r.status.indexOf('لم يتم') < 0;
     const badge = '<span class="badge ' + (full ? 'accepted' : 'pending') + '">' + svg(full ? 'check' : 'warn') + (full ? 'تم الاستلام بالكامل' : 'لم يتم الاستلام بالكامل') + '</span>';
-    const fl = r.flags.map((f) => '<span class="flag-pill' + (FL[f] && FL[f][2] ? ' dup' : '') + '" title="' + esc(FL[f] ? FL[f][1] : '') + '">' + esc(flName(f)) + '</span>').join('') || '<span style="color:var(--ink-faint)">—</span>';
     const diff = S.mode === 'calc' && r.un !== r.unrecv ? ' <span class="hint" title="القيمة المكتوبة في الشيت">(الشيت: ' + fmt(r.unrecv) + ')</span>' : '';
-    return '<tr><td class="id-cell num">' + r.sheetRow + '</td><td class="num">' + dmy(r.date) + '</td><td>' + esc(r.branch) + '</td><td class="num">' + fmt(r.sent) + '</td><td class="num">' + fmt(r.recv) + '</td><td class="num">' + fmt(r.un) + diff + '</td><td class="num">' + fmt(r.extra) + '</td><td>' + badge + '</td><td>' + fl + '</td></tr>';
-  }).join('') : '<tr class="empty-row"><td colspan="9"><div class="empty-state"><b>لا توجد صفوف</b><span>غيّر عوامل التصفية</span></div></td></tr>';
+    return '<tr><td class="id-cell num">' + r.sheetRow + '</td><td class="num">' + dmy(r.date) + '</td><td>' + esc(r.branch) + '</td><td class="num">' + fmt(r.sent) + '</td><td class="num">' + fmt(r.recv) + '</td><td class="num">' + fmt(r.un) + diff + '</td><td class="num">' + fmt(r.extra) + '</td><td>' + badge + '</td></tr>';
+  }).join('') : '<tr class="empty-row"><td colspan="8"><div class="empty-state"><b>لا توجد صفوف</b><span>غيّر عوامل التصفية</span></div></td></tr>';
   $('pgInfo').innerHTML = sorted.length ? 'عرض <b>' + ((S.page - 1) * S.size + 1) + '</b> – <b>' + Math.min(S.page * S.size, sorted.length) + '</b> من <b>' + fmt(sorted.length) + '</b>' : 'لا توجد صفوف';
   $('pgNow').textContent = S.page; $('pgAll').textContent = pages;
   $('pgPrev').disabled = S.page <= 1; $('pgNext').disabled = S.page >= pages;
@@ -205,7 +193,6 @@ function renderChips() {
   if (S.branches.size) chips.push(['الفرع: ' + [...S.branches].join('، '), () => S.branches.clear()]);
   if (S.from) chips.push(['من ' + dmy(S.from), () => { S.from = ''; $('fFrom').value = ''; }]);
   if (S.to) chips.push(['إلى ' + dmy(S.to), () => { S.to = ''; $('fTo').value = ''; }]);
-  if (S.flag !== 'all') chips.push([S.flag === 'flag' ? 'عليها ملاحظة جودة' : 'بدون ملاحظات', () => { S.flag = 'all'; $('fFlag').value = 'all'; }]);
   if (S.excl === 'yes') chips.push(['استبعاد المكرر/المتابعة', () => { S.excl = 'no'; $('fExcl').value = 'no'; }]);
   if (S.q.trim()) chips.push(['بحث: ' + S.q, () => { S.q = ''; $('fSearch').value = ''; }]);
   const bar = $('activeBar');
@@ -217,7 +204,7 @@ function renderChips() {
 }
 function refresh() {
   compute();
-  msRender(); renderChips(); renderKpis(); renderQuality(); renderBranches(); renderLog();
+  msRender(); renderChips(); renderKpis(); renderSensitivity(); renderBranches(); renderLog();
   $('lsTotal').textContent = fmt(ROWS.length); $('lsVisible').textContent = fmt(CUR.length); $('resultCount').textContent = fmt(CUR.length);
   $('lsMode').textContent = S.mode === 'calc' ? 'محسوب' : 'كما في الشيت';
   drawCharts();
@@ -242,8 +229,10 @@ $('themeToggle').onclick = () => applyTheme(document.documentElement.getAttribut
 applyTheme(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 refresh();
 // استبدال البيانات بنسخة حيّة من الشيت مع الإبقاء على الفلاتر الحالية
+window.ArriveMatch = { rows: () => ROWS, FL, flName };
 window.ARRIVE_setData = (raw) => {
   ROWS = OCT.prep(raw); BRANCHES = branchList(); setDateBounds();
   [...S.branches].forEach((b) => { if (!BRANCHES.includes(b)) S.branches.delete(b); });
   refresh();
+  document.dispatchEvent(new Event('arrive:data'));
 };

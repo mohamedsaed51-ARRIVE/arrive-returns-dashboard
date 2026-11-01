@@ -41,8 +41,10 @@ const SLA_REFRESH_SEC = 600;
 
   function decode(j) {
     const d = j.dict;
+    const posBy = {};
     const rows = j.rows.map((a, i) => {
-      const r = { id: i, wb: a[0], sender: d.senders[a[1]] || UNKNOWN, pickup: a[2], statusRaw: d.statuses[a[3]], status: normStatus(d.statuses[a[3]]), close: a[4], branchRaw: d.branches[a[5]], branch: normBranch(d.branches[a[5]]), final: d.finals[a[6]] || UNKNOWN, ret: a[7], ageS: a[8], tab: d.tabs[a[9]] };
+      const r = { id: i, wb: a[0], sender: d.senders[a[1]] || UNKNOWN, pickup: a[2], statusRaw: d.statuses[a[3]], status: normStatus(d.statuses[a[3]]), close: a[4], branchRaw: d.branches[a[5]], branch: normBranch(d.branches[a[5]]), final: d.finals[a[6]] || UNKNOWN, ret: a[7], ageS: a[8], tab: d.tabs[a[9]], srow: a[10] != null ? a[10] : null };
+      r.pos = posBy[r.tab] = (posBy[r.tab] || 0) + 1;
       r.ageC = days(r.close, r.ret);
       r.noDate = r.ageC == null;
       r.tk = tabKey(r.tab);
@@ -110,7 +112,6 @@ const SLA_REFRESH_SEC = 600;
       <div class="stub tone-in-progress"><div class="stub-top"><div class="stub-main"><div class="stub-label">متوسط عمر المرتجع (يوم)</div><div class="stub-value num" id="sK2">0</div></div></div><div class="stub-sub" id="sK2s">—</div></div>
       <div class="stub tone-success"><div class="stub-top"><div class="stub-main"><div class="stub-label">داخل حد الـ SLA</div><div class="stub-value num" id="sK3">—</div></div></div><div class="stub-sub" id="sK3s">—</div></div>
       <div class="stub tone-violation"><div class="stub-top"><div class="stub-main"><div class="stub-label">خارج حد الـ SLA</div><div class="stub-value num" id="sK4">—</div></div></div><div class="stub-sub" id="sK4s">—</div></div>
-      <div class="stub tone-under-action"><div class="stub-top"><div class="stub-main"><div class="stub-label">صفوف عليها ملاحظة جودة</div><div class="stub-value num" id="sK5">0</div></div></div><div class="stub-sub" id="sK5s">—</div></div>
     </section>
     <div class="section-heading"><h2><span class="tag">اتجاهات</span> الاتجاهات والتوزيعات</h2><span class="section-sub">اضغط على أي فرع داخل الرسم لتصفية اللوحة عليه</span></div>
     <section class="panel-grid single"><div class="panel"><h3>المرتجعات المقفلة يوميًا ومتوسط عمرها</h3><div class="panel-sub">أعمدة: عدد المرتجعات حسب تاريخ تقفيل المرتجع — الخط: متوسط العمر (يوم). أيام أكتوبر في آخر الرسم تضم شحنات مقفلة في سبتمبر فقط، فارتفاع العمر فيها أثر نطاق الشيت وليس بالضرورة تدهورًا</div><div class="chart-wrap tall"><canvas id="sChDaily"></canvas></div></div></section>
@@ -118,9 +119,8 @@ const SLA_REFRESH_SEC = 600;
       <div class="panel"><h3>توزيع عمر المرتجع</h3><div class="panel-sub">عدد المرتجعات في كل شريحة عمر (يوم)</div><div class="chart-wrap tall"><canvas id="sChDist"></canvas></div></div>
       <div class="panel"><h3>متوسط العمر حسب الفرع</h3><div class="panel-sub">كل الفروع مرتبة بأعلى متوسط عمر، والرقم بين القوسين عدد الصفوف</div><div class="chart-wrap xl"><canvas id="sChBranch"></canvas></div></div>
     </section>
-    <div class="section-heading"><h2><span class="tag">جودة</span> جودة البيانات وحساسية الأرقام</h2><span class="section-sub">الصفوف الأصلية لم تُعدّل. الملاحظات وسم فقط ويمكن تصفيتها</span></div>
-    <section class="panel-grid halves">
-      <div class="panel"><h3>الملاحظات المكتشفة</h3><div class="panel-sub">ضمن التصفية الحالية</div><div class="tbl-wrap"><table class="mini-table" id="sFlagTbl"></table></div></div>
+    <div class="section-heading"><h2><span class="tag">حساسية</span> حساسية الأرقام لأساس الحساب</h2><span class="section-sub">مشاكل البيانات وصفوفها في تاب «جودة البيانات»</span></div>
+    <section class="panel-grid single">
       <div class="panel"><h3>أثر أساس حساب العمر</h3><div class="panel-sub">نفس التصفية — اضغط على الصف لاختيار أساس الحساب (المظلل هو الحالي)</div><div class="tbl-wrap"><table class="mini-table" id="sSensTbl"></table></div><div class="hint" id="sSensHint"></div></div>
     </section>
     <div class="section-heading"><h2><span class="tag">فروع</span> أداء الفروع</h2><span class="section-sub">اضغط على عنوان العمود للترتيب، واضغط على الصف لتصفية الفرع</span></div>
@@ -131,7 +131,7 @@ const SLA_REFRESH_SEC = 600;
       <div class="table-scroll"><table id="sSdTbl"><thead><tr><th data-k="key">الراسل <span class="arrow"></span></th><th data-k="rows">عدد الصفوف <span class="arrow"></span></th><th data-k="avg">متوسط العمر <span class="arrow"></span></th><th data-k="max">الأقصى <span class="arrow"></span></th><th data-k="late">خارج الحد <span class="arrow"></span></th></tr></thead><tbody id="sSdBody"></tbody></table></div></section>
     <div class="section-heading"><h2><span class="tag">سجل</span> السجل التفصيلي</h2><span class="section-sub">الصفوف كما في الشيت، والتاب هو اسم التاب اليومي المصدر</span></div>
     <section class="table-panel"><div class="table-head-bar"><h3>صفوف المرتجعات</h3><span class="result-count"><b id="sLogCount">0</b> صف</span></div>
-      <div class="table-scroll"><table id="sLogTbl"><thead><tr><th data-k="wb">رقم البوليصة <span class="arrow"></span></th><th data-k="sender">الراسل <span class="arrow"></span></th><th data-k="branch">الفرع <span class="arrow"></span></th><th data-k="status">حالة الشحنة <span class="arrow"></span></th><th data-k="pickup">استلام البيك أب <span class="arrow"></span></th><th data-k="close">تقفيل الشحنة <span class="arrow"></span></th><th data-k="ret">تقفيل المرتجع <span class="arrow"></span></th><th data-k="age">العمر (يوم) <span class="arrow"></span></th><th data-k="sla">الـ SLA <span class="arrow"></span></th><th data-k="nflags">الملاحظات <span class="arrow"></span></th><th data-k="tk">التاب <span class="arrow"></span></th></tr></thead><tbody id="sLogBody"></tbody></table></div>
+      <div class="table-scroll"><table id="sLogTbl"><thead><tr><th data-k="wb">رقم البوليصة <span class="arrow"></span></th><th data-k="sender">الراسل <span class="arrow"></span></th><th data-k="branch">الفرع <span class="arrow"></span></th><th data-k="status">حالة الشحنة <span class="arrow"></span></th><th data-k="pickup">استلام البيك أب <span class="arrow"></span></th><th data-k="close">تقفيل الشحنة <span class="arrow"></span></th><th data-k="ret">تقفيل المرتجع <span class="arrow"></span></th><th data-k="age">العمر (يوم) <span class="arrow"></span></th><th data-k="sla">الـ SLA <span class="arrow"></span></th><th data-k="tk">التاب <span class="arrow"></span></th></tr></thead><tbody id="sLogBody"></tbody></table></div>
       <div class="pager"><div class="pager-info" id="sPgInfo"></div><div class="pager-ctl"><button class="pg-btn" id="sPgPrev" type="button">السابق</button><span class="pager-info"><b id="sPgNow">1</b> / <b id="sPgAll">1</b></span><button class="pg-btn" id="sPgNext" type="button">التالي</button><select id="sPgSize"><option>25</option><option>50</option><option>100</option></select></div></div></section>
     <div class="note-box" style="margin-top:20px"><b>ملاحظات على المنهجية:</b> عمر المرتجع = تاريخ تقفيل المرتجع − تاريخ التقفيل. الافتراضي عمود «عمر المرتجع» كما هو في الشيت، والبديل المحسوب في الفلتر. «داخل الحد» = العمر ≤ الحد بالأيام، ولا يظهر أي حكم قبل إدخال حد معتمد. تواريخ الشيت يوم/شهر/سنة. أسماء الفروع موحّدة للعرض فقط (مثل «فرع رئيسى» و«فرع الرئيسى» ← الرئيسي)، والاسم الأصلي في السجل التفصيلي عند الحاجة. بوليصات كثيرة تظهر في أكثر من تاب، ولم تُستبعد افتراضيًا. الصفوف بلا تاريخ صالح لا تدخل في حساب العمر.</div>
   </main>`;
@@ -215,14 +215,9 @@ const SLA_REFRESH_SEC = 600;
     $('sK2').textContent = f1(T.avg); $('sK2s').textContent = 'الوسيط ' + f1(T.med) + ' · الأقصى ' + fmt(T.max) + ' · مستبعد بلا عمر: ' + fmt(T.rows - T.n);
     $('sK3').textContent = t == null ? '—' : pct(T.rate); $('sK3s').textContent = t == null ? 'أدخل حد الـ SLA بالأيام لحسابها' : fmt(T.within) + ' من ' + fmt(T.n) + ' (العمر ≤ ' + t + ')';
     $('sK4').textContent = t == null ? '—' : fmt(T.late); $('sK4s').textContent = t == null ? 'لا يُحكم قبل تحديد الحد' : 'العمر > ' + t + ' يوم';
-    const fl = CUR.filter((r) => r.flags.length).length;
-    $('sK5').textContent = fmt(fl); $('sK5s').textContent = CUR.length ? pct(fl / CUR.length) + ' من الصفوف المعروضة' : '—';
     $('sKpiSub').textContent = 'محسوبة ضمن عوامل التصفية وأساس الحساب المختار';
   }
   function renderQuality() {
-    const cnt = {}; CUR.forEach((r) => r.flags.forEach((f) => { cnt[f] = (cnt[f] || 0) + 1; }));
-    $('sFlagTbl').innerHTML = '<thead><tr><th>الملاحظة</th><th class="num">عدد الصفوف</th><th>المعنى</th></tr></thead><tbody>' +
-      (Object.keys(FL).filter((f) => cnt[f]).map((f) => '<tr><td>' + esc(FL[f][0]) + '</td><td class="num">' + fmt(cnt[f]) + '</td><td>' + esc(FL[f][1]) + '</td></tr>').join('') || '<tr><td colspan="3">لا توجد ملاحظات ضمن التصفية الحالية</td></tr>') + '</tbody>';
     const W = stats(CUR, (r) => (r.noDate ? null : r.ageS)), C = stats(CUR, (r) => (r.noDate ? null : r.ageC));
     const row = (lb, T, on, m) => '<tr data-m="' + m + '" style="cursor:pointer" class="' + (on ? 'on' : '') + '"><td>' + lb + '</td><td class="num">' + f1(T.avg) + '</td><td class="num">' + f1(T.med) + '</td><td class="num">' + fmt(T.max) + '</td><td class="num">' + (T.rate == null ? '—' : pct(T.rate)) + '</td></tr>';
     $('sSensTbl').innerHTML = '<thead><tr><th>أساس الحساب</th><th class="num">المتوسط</th><th class="num">الوسيط</th><th class="num">الأقصى</th><th class="num">داخل الحد</th></tr></thead><tbody>' + row('كما في الشيت', W, S.mode === 'written', 'written') + row('محسوب من التواريخ', C, S.mode === 'calc', 'calc') + '</tbody>';
@@ -243,7 +238,7 @@ const SLA_REFRESH_SEC = 600;
   }
   function renderLog() {
     const t = thr();
-    const rows = CUR.map((r) => Object.assign({}, r, { age: ageOf(r), nflags: r.flags.length, sla: t == null || ageOf(r) == null ? null : (ageOf(r) <= t ? 1 : 0) }));
+    const rows = CUR.map((r) => Object.assign({}, r, { age: ageOf(r), sla: t == null || ageOf(r) == null ? null : (ageOf(r) <= t ? 1 : 0) }));
     const [k, d] = S.sort.log;
     const sorted = rows.sort((a, b) => cmp(a, b, k, d) || a.id - b.id);
     const pages = Math.max(1, Math.ceil(sorted.length / S.size)); if (S.page > pages) S.page = pages;
@@ -251,10 +246,9 @@ const SLA_REFRESH_SEC = 600;
     $('sLogCount').textContent = fmt(sorted.length);
     $('sLogBody').innerHTML = slice.length ? slice.map((r) => {
       const badge = r.sla == null ? '<span style="color:var(--ink-faint)">—</span>' : '<span class="badge ' + (r.sla ? 'sla-in' : 'sla-out') + '">' + (r.sla ? 'داخل الحد' : 'خارج الحد') + '</span>';
-      const fl = r.flags.map((f) => '<span class="flag-pill' + (f === 'مكرر_في_تابات' ? '' : ' dup') + '" title="' + esc(FL[f][1]) + '">' + esc(FL[f][0]) + '</span>').join('') || '<span style="color:var(--ink-faint)">—</span>';
       const alt = r.branchRaw !== r.branch && r.branch !== UNKNOWN ? ' <span class="hint" title="الاسم في الشيت">(' + esc(r.branchRaw) + ')</span>' : '';
-      return '<tr><td class="id-cell num">' + esc(r.wb) + '</td><td>' + esc(r.sender) + '</td><td>' + esc(r.branch) + alt + '</td><td>' + esc(r.status) + '</td><td class="num">' + dmy(r.pickup) + '</td><td class="num">' + dmy(r.close) + '</td><td class="num">' + dmy(r.ret) + '</td><td class="num">' + (r.age == null ? '—' : fmt(r.age)) + '</td><td>' + badge + '</td><td>' + fl + '</td><td class="num">' + esc(r.tab) + '</td></tr>';
-    }).join('') : '<tr class="empty-row"><td colspan="11"><div class="empty-state"><b>لا توجد صفوف</b><span>غيّر عوامل التصفية</span></div></td></tr>';
+      return '<tr><td class="id-cell num">' + esc(r.wb) + '</td><td>' + esc(r.sender) + '</td><td>' + esc(r.branch) + alt + '</td><td>' + esc(r.status) + '</td><td class="num">' + dmy(r.pickup) + '</td><td class="num">' + dmy(r.close) + '</td><td class="num">' + dmy(r.ret) + '</td><td class="num">' + (r.age == null ? '—' : fmt(r.age)) + '</td><td>' + badge + '</td><td class="num">' + esc(r.tab) + '</td></tr>';
+    }).join('') : '<tr class="empty-row"><td colspan="10"><div class="empty-state"><b>لا توجد صفوف</b><span>غيّر عوامل التصفية</span></div></td></tr>';
     $('sPgInfo').innerHTML = sorted.length ? 'عرض <b>' + ((S.page - 1) * S.size + 1) + '</b> – <b>' + Math.min(S.page * S.size, sorted.length) + '</b> من <b>' + fmt(sorted.length) + '</b>' : 'لا توجد صفوف';
     $('sPgNow').textContent = S.page; $('sPgAll').textContent = pages; $('sPgPrev').disabled = S.page <= 1; $('sPgNext').disabled = S.page >= pages;
     arrows('sLogTbl', S.sort.log);
@@ -297,6 +291,7 @@ const SLA_REFRESH_SEC = 600;
     META.period = rets.length ? dmy(rets[0]) + ' — ' + dmy(rets[rets.length - 1]) : '';
     $('sConn').textContent = (source === 'live' ? 'مباشر من الشيت — ' : 'لقطة ثابتة — ') + (j.updatedAt ? new Date(j.updatedAt).toLocaleDateString('ar-EG') : '');
     if (visible()) { applyHeader(); refresh(); }
+    document.dispatchEvent(new Event('arrive:data'));
   }
   function loadSnap() {
     return new Promise((res) => {
@@ -319,31 +314,39 @@ const SLA_REFRESH_SEC = 600;
 
   // ---------- التبويبات ----------
   const orig = {};
+  let VIEW_NOW = 'match';
   function applyHeader() {
     const h1 = document.querySelector('h1.title'), sub = document.querySelector('.subtitle');
     const bs = document.querySelector('.brand-sys span');
     if (!orig.h1) { orig.h1 = h1.textContent; orig.sub = sub.textContent; orig.bs = bs.textContent; orig.foot = [...document.querySelectorAll('.footer-version-pill,.f-item')].map((e) => e.textContent); }
-    const on = visible();
-    h1.textContent = on ? 'لوحة SLA المرتجعات' : orig.h1;
-    sub.textContent = on ? 'عمر المرتجع من تاريخ تقفيل الشحنة إلى تاريخ تقفيل المرتجع' + (META.period ? ' — تقفيل المرتجع: ' + META.period : '') : orig.sub;
-    bs.textContent = on ? 'نظام متابعة SLA المرتجعات' : orig.bs;
-    document.querySelectorAll('.top-meta,.header-meta-row').forEach((e) => (e.hidden = on));
+    const v = VIEW_NOW;
+    h1.textContent = v === 'sla' ? 'لوحة SLA المرتجعات' : v === 'quality' ? 'لوحة جودة البيانات' : orig.h1;
+    sub.textContent = v === 'sla' ? 'عمر المرتجع من تاريخ تقفيل الشحنة إلى تاريخ تقفيل المرتجع' + (META.period ? ' — تقفيل المرتجع: ' + META.period : '') : v === 'quality' ? 'كل مشكلة في البيانات مكتوبة مع الصف الذي ظهرت فيه، ليُصحَّح في الشيت' : orig.sub;
+    bs.textContent = v === 'sla' ? 'نظام متابعة SLA المرتجعات' : v === 'quality' ? 'نظام متابعة جودة البيانات' : orig.bs;
+    document.querySelectorAll('.top-meta,.header-meta-row').forEach((e) => (e.hidden = v !== 'match'));
     const foot = [...document.querySelectorAll('.footer-version-pill,.f-item')];
-    foot.forEach((e, i) => { e.textContent = on ? ['SLA Returns', 'المصدر: شيت Sla RTO (تابات يومية)', META.updatedAt ? 'بيانات بتاريخ ' + dmy(String(META.updatedAt).slice(0, 10)) : ''][i] || '' : orig.foot[i]; });
+    const alt = v === 'sla' ? ['SLA Returns', 'المصدر: شيت Sla RTO (تابات يومية)', META.updatedAt ? 'بيانات بتاريخ ' + dmy(String(META.updatedAt).slice(0, 10)) : ''] : ['Data Quality', 'المصدر: ورقة «شهر 10» وشيت Sla RTO', ''];
+    foot.forEach((e, i) => { e.textContent = v === 'match' ? orig.foot[i] : (alt[i] || ''); });
+  }
+  let loadP = null;
+  function ensure() {
+    if (ROWS.length) return Promise.resolve();
+    if (!loadP) loadP = (async () => { const snap = await loadSnap(); if (snap) setData(snap, 'snap'); pull(); })();
+    return loadP;
   }
   async function show(which) {
-    const sla = which === 'sla';
-    $('view-match').hidden = sla; $('view-sla').hidden = !sla;
+    VIEW_NOW = which;
+    ['match', 'sla', 'quality'].forEach((v) => { const e = $('view-' + v); if (e) e.hidden = v !== which; });
     document.querySelectorAll('.view-tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === which)));
-    try { history.replaceState(null, '', sla ? '#sla' : location.pathname + location.search); } catch (e) { /* ignore */ }
-    if (sla && !ROWS.length) {
+    try { history.replaceState(null, '', which === 'match' ? location.pathname + location.search : '#' + which); } catch (e) { /* ignore */ }
+    if (which === 'sla' && !ROWS.length) {
       $('sConn').textContent = 'جارٍ التحميل…';
-      const snap = await loadSnap();
-      if (snap) setData(snap, 'snap'); else $('sConn').textContent = 'تعذّر تحميل البيانات';
-      pull();
+      await ensure();
+      if (!ROWS.length) $('sConn').textContent = 'تعذّر تحميل البيانات';
     }
     applyHeader();
-    if (sla && ROWS.length) refresh();
+    if (which === 'sla' && ROWS.length) refresh();
+    if (which === 'quality' && window.ArriveQuality) window.ArriveQuality.open();
   }
 
   function init() {
@@ -367,9 +370,9 @@ const SLA_REFRESH_SEC = 600;
     document.querySelectorAll('.view-tab').forEach((b) => b.addEventListener('click', () => show(b.dataset.view)));
     new MutationObserver(() => { if (visible() && ROWS.length) drawCharts(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     setInterval(() => { if (visible() && !document.hidden) pull(); }, SLA_REFRESH_SEC * 1000);
-    if (location.hash === '#sla') show('sla');
+    if (location.hash === '#sla' || location.hash === '#quality') show(location.hash.slice(1));
   }
   init();
   // واجهة قراءة فقط لتقرير SLA (report-sla.js) — لا تغيّر أي حساب
-  window.ArriveSla = { state: () => ({ S, ALL, CUR, ROWS, META, FL, UNKNOWN, ageOf, thr, stats, group }) };
+  window.ArriveSla = { ensure, state: () => ({ S, ALL, CUR, ROWS, META, FL, UNKNOWN, ageOf, thr, stats, group }) };
 })();
