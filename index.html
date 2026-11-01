@@ -63,7 +63,7 @@
 <div class="filter-bar">
 <div class="filter-wrap">
   <div class="filter-head">
-    <div class="filter-title"><span id="ic-sl"></span> عوامل التصفية وطريقة الحساب</div>
+    <div class="filter-title"><span id="ic-sl"></span> عوامل التصفية</div>
     <div class="filter-head-actions">
       <span class="result-count"><b id="resultCount">0</b> نتيجة</span>
       <button class="btn-reset" id="btnReset" type="button"><span id="ic-reset2"></span> مسح الفلاتر</button>
@@ -80,8 +80,6 @@
     <div class="fgroup"><label for="fTo">إلى تاريخ</label><input type="date" id="fTo" min="2026-10-01" max="2026-10-31"></div>
     <div class="fgroup"><label for="fFlag">ملاحظات الجودة</label>
       <select id="fFlag"><option value="all">كل الصفوف</option><option value="flag">عليها ملاحظة جودة فقط</option><option value="clean">بدون ملاحظات فقط</option></select></div>
-    <div class="fgroup"><label for="fMode">أساس حساب «غير المستلم»</label>
-      <select id="fMode"><option value="written">كما هو مكتوب في عمود الشيت</option><option value="calc">محسوب: المرسل − (المستلم − غير المدرجة)</option></select></div>
     <div class="fgroup"><label for="fExcl">الصفوف المكررة / المتابعة</label>
       <select id="fExcl"><option value="no">إدراج كل الصفوف (كما في الشيت)</option><option value="yes">استبعاد المكرر المتطابق وصفوف المتابعة</option></select></div>
   </div>
@@ -120,7 +118,7 @@
   </div>
   <section class="panel-grid halves">
     <div class="panel"><h3>الملاحظات المكتشفة</h3><div class="panel-sub">ضمن الفرع والتاريخ المختارين</div><div class="tbl-wrap"><table class="mini-table" id="flagTbl"></table></div></div>
-    <div class="panel"><h3>أثر طريقة الحساب على النسبة</h3><div class="panel-sub">نفس الفرع والتاريخ المختارين، والصف المظلل هو الاختيار الحالي</div><div class="tbl-wrap"><table class="mini-table" id="sensTbl"></table></div><div class="hint" id="sensHint"></div></div>
+    <div class="panel"><h3>أثر طريقة الحساب على النسبة</h3><div class="panel-sub">نفس الفرع والتاريخ المختارين — اضغط على الصف لاختيار أساس الحساب (المظلل هو الحالي)</div><div class="tbl-wrap"><table class="mini-table" id="sensTbl"></table></div><div class="hint" id="sensHint"></div></div>
   </section>
 
   <div class="section-heading">
@@ -169,8 +167,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="data.js"></script>
 <script src="core.js"></script>
-<script src="app.js"></script>
-<script src="report.js"></script>
+<script src="app.js?v=2"></script>
+<script src="report.js?v=2"></script>
 <script src="live.js"></script>
 <script src="sla.js?v=7"></script>
 <script src="report-sla.js?v=3"></script>

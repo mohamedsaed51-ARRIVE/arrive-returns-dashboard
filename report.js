@@ -75,7 +75,7 @@
     if (T.extra) att.push(['شحنات مستلمة غير مدرجة', T.extra]);
     pages.push(page(head('الملخص التنفيذي', ctx) +
       '<div class="rp-kpis">' + kpi('المرسل', L(T.sent), 'tone-brand') + kpi('غير المستلم', L(T.unrecv), 'tone-violation') +
-      kpi('نسبة المطابقة', pct(T.rate), T.rate != null && T.rate < 0.8 ? 'tone-under-action' : 'tone-success') + kpi('غير مدرجة', L(T.extra), '') + '</div>' +
+      kpi('نسبة المطابقة', pct(T.rate), 'tone-success') + kpi('غير مدرجة', L(T.extra), '') + '</div>' +
       '<p class="rp-note">' + L(T.rows) + ' صف · ' + L(br.length) + ' فرع · ' + L(T.days) + ' يوم. نسبة المطابقة = (المرسل − غير المستلم) ÷ المرسل = ' + L(T.matched) + ' ÷ ' + L(T.sent) + '.</p>' +
       '<div class="rp-cols"><div><h3>ما يحتاج انتباه الإدارة</h3>' +
       (att.length ? table([{ t: 'البند' }, { t: 'العدد', num: true, w: '20mm' }], att.map((a) => '<tr><td>' + a[0] + '</td><td class="num">' + L(a[1]) + '</td></tr>').join('')) : '<p class="rp-note">لا توجد ملاحظات ضمن التصفية الحالية.</p>') +

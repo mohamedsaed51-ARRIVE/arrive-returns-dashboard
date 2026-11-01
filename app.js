@@ -61,7 +61,7 @@ function msRender() {
     '<label class="ms-option"><input type="checkbox" value="' + esc(b) + '"' + (S.branches.has(b) ? ' checked' : '') + '><span>' + esc(b) + '</span></label>').join('');
   root.className = 'ms' + (MS.open ? ' open' : '');
   root.innerHTML = '<div class="ms-control" tabindex="0" role="combobox" aria-expanded="' + MS.open + '"><div class="ms-chips">' + ph + chips + more + '</div><span class="ms-caret">▼</span></div>' +
-    '<div class="ms-panel"><input class="ms-search" placeholder="ابحث عن فرع…" value="' + esc(MS.term) + '"><div class="ms-actions"><button type="button" data-a="all">تحديد الكل</button><button type="button" data-a="none">مسح</button></div><div class="ms-options">' + (opts || '<div class="ms-empty">لا توجد نتائج</div>') + '</div></div>';
+    '<div class="ms-panel"><input class="ms-search" placeholder="ابحث عن فرع…" value="' + esc(MS.term) + '"><div class="ms-actions"><button type="button" data-a="none">مسح</button></div><div class="ms-options">' + (opts || '<div class="ms-empty">لا توجد نتائج</div>') + '</div></div>';
   const inp = root.querySelector('.ms-search');
   if (MS.open && MS.focusSearch) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
 }
@@ -69,7 +69,7 @@ $('msBranch').addEventListener('click', (e) => {
   const rm = e.target.closest('[data-rm]');
   if (rm) { S.branches.delete(rm.dataset.rm); MS.focusSearch = false; refresh(); return; }
   const a = e.target.closest('[data-a]');
-  if (a) { if (a.dataset.a === 'all') BRANCHES.forEach((b) => S.branches.add(b)); else S.branches.clear(); refresh(); return; }
+  if (a) { S.branches.clear(); refresh(); return; }
   const cb = e.target.closest('input[type=checkbox]');
   if (cb) { cb.checked ? S.branches.add(cb.value) : S.branches.delete(cb.value); MS.focusSearch = true; refresh(); return; }
   if (e.target.closest('.ms-control')) { MS.open = !MS.open; MS.focusSearch = MS.open; msRender(); }
@@ -82,7 +82,7 @@ $('fSearch').addEventListener('input', (e) => { S.q = e.target.value; S.page = 1
 $('fFrom').addEventListener('change', (e) => { S.from = e.target.value; S.page = 1; refresh(); });
 $('fTo').addEventListener('change', (e) => { S.to = e.target.value; S.page = 1; refresh(); });
 $('fFlag').addEventListener('change', (e) => { S.flag = e.target.value; S.page = 1; refresh(); });
-$('fMode').addEventListener('change', (e) => { S.mode = e.target.value; refresh(); });
+$('sensTbl').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-m]'); if (!tr) return; S.mode = tr.dataset.m; S.excl = tr.dataset.x; $('fExcl').value = S.excl; S.page = 1; refresh(); });
 $('fExcl').addEventListener('change', (e) => { S.excl = e.target.value; S.page = 1; refresh(); });
 function resetAll() {
   S.branches.clear(); S.from = S.to = ''; S.flag = 'all'; S.excl = 'no'; S.q = ''; S.page = 1;
@@ -157,7 +157,7 @@ function renderQuality() {
   const combos = [['written', 'no', 'كما في الشيت · كل الصفوف'], ['written', 'yes', 'كما في الشيت · بدون مكرر/متابعة'], ['calc', 'no', 'محسوب · كل الصفوف'], ['calc', 'yes', 'محسوب · بدون مكرر/متابعة']];
   $('sensTbl').innerHTML = '<thead><tr><th>الحالة</th><th class="num">مرسل</th><th class="num">غير مستلم</th><th class="num">النسبة</th></tr></thead><tbody>' +
     combos.map(([md, ex, lb]) => { const T = OCT.totals(ex === 'yes' ? noDup : ALL, md); const on = md === S.mode && ex === S.excl;
-      return '<tr class="' + (on ? 'on' : '') + '"><td>' + lb + '</td><td class="num">' + fmt(T.sent) + '</td><td class="num">' + fmt(T.unrecv) + '</td><td class="num">' + pct(T.rate) + '</td></tr>'; }).join('') + '</tbody>';
+      return '<tr data-m="' + md + '" data-x="' + ex + '" style="cursor:pointer" class="' + (on ? 'on' : '') + '"><td>' + lb + '</td><td class="num">' + fmt(T.sent) + '</td><td class="num">' + fmt(T.unrecv) + '</td><td class="num">' + pct(T.rate) + '</td></tr>'; }).join('') + '</tbody>';
   const a = OCT.totals(ALL, 'written'), b = OCT.totals(noDup, 'written');
   $('sensHint').textContent = ALL.length ? 'استبعاد المكرر والمتابعة يزيل ' + fmt(a.sent - b.sent) + ' شحنة من المرسل و' + fmt(a.unrecv - b.unrecv) + ' من غير المستلم.' : '';
 }
