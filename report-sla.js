@@ -17,6 +17,7 @@
     const T = X.stats(CUR, X.ageOf), t = X.thr();
     const rets = CUR.map((r) => r.ret).filter(Boolean).sort();
     const periodTxt = rets.length ? dmy(rets[0]) + ' ← ' + dmy(rets[rets.length - 1]) : MISSING;
+    const cl = CUR.map((r) => r.close).filter(Boolean).sort(), closeTxt = cl.length ? dmy(cl[0]) + ' ← ' + dmy(cl[cl.length - 1]) : MISSING;
     const ctx = { title: 'تقرير SLA المرتجعات', period: 'تقفيل المرتجع: ' + periodTxt };
     const modeTxt = S.mode === 'calc' ? 'محسوب: تاريخ تقفيل المرتجع − تاريخ التقفيل' : 'كما في عمود «عمر المرتجع» بالشيت';
     const thrTxt = t == null ? 'غير محدد بالمصدر (لم يُدخل حد معتمد، فلا يُصدر حكم داخل/خارج الحد)' : t + ' يوم (داخل الحد = العمر ≤ ' + t + ')';
@@ -46,7 +47,8 @@
     pages.push(page('<div class="rp-cover-top"><img class="rp-cover-logo" src="arrive-logo-white.png" alt="ARRIVE"></div><div class="rp-cover-main"><div class="rp-cover-kicker">إدارة المراجعة التشغيلية</div>' +
       '<h1>تقرير SLA المرتجعات<br>عمر المرتجع حتى التقفيل</h1><div class="rp-cover-rule"></div><dl class="rp-cover-meta">' +
       '<div><dt>الفترة المشمولة</dt><dd class="num">' + periodTxt + '</dd></div>' +
-      '<div><dt>عدد الصفوف</dt><dd><span class="num">' + L(T.rows) + '</span> صف · <span class="num">' + L(uniq) + '</span> بوليصة · <span class="num">' + L(br.length) + '</span> فرع</dd></div>' +
+      '<div><dt>عدد الصفوف</dt><dd><span class="num">' + L(T.rows) + '</span> صف · <span class="num">' + L(uniq) + '</span> بوليصة · <span class="num">' + L(br.filter((b) => b.key !== UNKNOWN).length) + '</span> فرع</dd></div>' +
+      '<div><dt>نطاق تقفيل الشحنة</dt><dd class="num">' + closeTxt + '</dd></div>' +
       '<div><dt>عوامل التصفية</dt><dd>' + filt + '</dd></div>' +
       '<div><dt>أساس حساب العمر</dt><dd>' + esc(modeTxt) + '</dd></div>' +
       '<div><dt>حد الـ SLA</dt><dd>' + esc(thrTxt) + '</dd></div>' +
@@ -62,7 +64,7 @@
     const bars = brRank.slice(0, 6);
     pages.push(page(head('الملخص التنفيذي', ctx) +
       '<div class="rp-kpis">' + kpi('عدد المرتجعات', L(T.rows), 'tone-brand') + kpi('متوسط العمر (يوم)', f1(T.avg), '') +
-      kpi('داخل حد الـ SLA', t == null ? '—' : p1(T.rate), t == null ? '' : (T.rate >= 0.9 ? 'tone-success' : 'tone-under-action')) + kpi('خارج الحد', t == null ? '—' : L(T.late), t == null ? '' : 'tone-violation') + '</div>' +
+      kpi('داخل حد الـ SLA', t == null ? '—' : p1(T.rate), t == null ? '' : 'tone-success') + kpi('خارج الحد', t == null ? '—' : L(T.late), t == null ? '' : 'tone-violation') + '</div>' +
       '<p class="rp-note">الوسيط ' + f1(T.med) + ' يوم · الأقصى ' + L(T.max) + ' يوم · ' + L(T.n) + ' صفًا لها عمر مقروء' + (noAge ? ' و' + L(noAge) + ' صفًا بلا عمر (مستبعدة من المتوسط)' : '') + '. ' +
       (t == null ? 'لم يُحدد حد SLA معتمد، لذلك لا يُحكم على الالتزام.' : 'داخل الحد = ' + L(T.within) + ' من ' + L(T.n) + '.') + '</p>' +
       '<div class="rp-cols"><div><h3>ما يحتاج انتباه الإدارة</h3>' +
@@ -149,6 +151,7 @@
       '<li>الصفوف بلا تاريخ صالح لا تدخل في حساب العمر (' + L(noAge) + ' في هذا التقرير).</li></ul><h3>حدود التقرير</h3><ul>' +
       '<li>الصفوف لم تُعدَّل؛ وسوم الجودة للتنبيه فقط، وأسماء الفروع موحّدة للعرض فقط.</li>' +
       '<li>البوليصات المتكررة بين التابات ' + (S.dup === 'all' ? 'مُدرجة كلها (كما في الشيت)' : 'مفلترة حسب الخيار المحدد') + '، وقد تضخّم العدد إن كانت إدخالًا مكررًا.</li>' +
+      '<li>النطاق: صفوف شيت «Sla RTO» التي لها تاريخ تقفيل مرتجع فقط (كل الصفوف المحمّلة لها تاريخ). المرتجعات التي لم تُقفل بعد غير ظاهرة، فالأعمار الطويلة قد تكون أقل من الواقع.</li>' +
       '<li>لا توجد بيانات لفترة سابقة في المصدر، والمقارنة الواردة بين نصفي الفترة المختارة وليست مع شهر سابق.</li>' +
       '<li>الإجراءات الواردة مقترحة وتحتاج اعتماد الإدارة قبل اعتبارها قرارًا.</li></ul>' +
       '<div class="rp-sign"><div><span>إعداد</span><i></i></div><div><span>مراجعة</span><i></i></div><div><span>اعتماد</span><i></i></div></div><div class="rp-end">نهاية التقرير</div></div>' + foot()));
