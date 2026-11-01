@@ -25,9 +25,7 @@
     if (S.branches.size) chips.push('الفرع: ' + [...S.branches].map(esc).join('، '));
     if (S.statuses.size) chips.push('الحالة: ' + [...S.statuses].map(esc).join('، '));
     if (S.senders.size) chips.push('الراسل: ' + [...S.senders].slice(0, 4).map(esc).join('، ') + (S.senders.size > 4 ? ' و' + (S.senders.size - 4) + ' آخرين' : ''));
-    if (S.final !== 'all') chips.push('الحالة النهائية: ' + esc(S.final));
     if (S.from || S.to) chips.push('تقفيل المرتجع: ' + (S.from ? dmy(S.from) : 'البداية') + ' إلى ' + (S.to ? dmy(S.to) : 'النهاية'));
-    if (S.flag !== 'all') chips.push(S.flag === 'flag' ? 'الصفوف الموسومة فقط' : 'الصفوف السليمة فقط');
     if (S.dup !== 'all') chips.push(S.dup === 'last' ? 'آخر ظهور لكل بوليصة' : 'أول ظهور لكل بوليصة');
     if (S.q.trim()) chips.push('بحث: ' + esc(S.q.trim()));
     const filt = chips.length ? chips.join('، ') : 'لا توجد (كل الصفوف)';
