@@ -113,10 +113,10 @@ const SLA_REFRESH_SEC = 600;
       <div class="stub tone-under-action"><div class="stub-top"><div class="stub-main"><div class="stub-label">صفوف عليها ملاحظة جودة</div><div class="stub-value num" id="sK5">0</div></div></div><div class="stub-sub" id="sK5s">—</div></div>
     </section>
     <div class="section-heading"><h2><span class="tag">اتجاهات</span> الاتجاهات والتوزيعات</h2><span class="section-sub">اضغط على أي فرع داخل الرسم لتصفية اللوحة عليه</span></div>
-    <section class="panel-grid single"><div class="panel"><h3>المرتجعات المقفلة يوميًا ومتوسط عمرها</h3><div class="panel-sub">أعمدة: عدد المرتجعات حسب تاريخ تقفيل المرتجع — الخط: متوسط العمر (يوم)</div><div class="chart-wrap tall"><canvas id="sChDaily"></canvas></div></div></section>
+    <section class="panel-grid single"><div class="panel"><h3>المرتجعات المقفلة يوميًا ومتوسط عمرها</h3><div class="panel-sub">أعمدة: عدد المرتجعات حسب تاريخ تقفيل المرتجع — الخط: متوسط العمر (يوم). أيام أكتوبر في آخر الرسم تضم شحنات مقفلة في سبتمبر فقط، فارتفاع العمر فيها أثر نطاق الشيت وليس بالضرورة تدهورًا</div><div class="chart-wrap tall"><canvas id="sChDaily"></canvas></div></div></section>
     <section class="panel-grid halves">
       <div class="panel"><h3>توزيع عمر المرتجع</h3><div class="panel-sub">عدد المرتجعات في كل شريحة عمر (يوم)</div><div class="chart-wrap tall"><canvas id="sChDist"></canvas></div></div>
-      <div class="panel"><h3>متوسط العمر حسب الفرع</h3><div class="panel-sub">أعلى 12 فرعًا في متوسط العمر (فروع بـ 30 صفًا فأكثر، دون «غير محدد»)، والرقم بين القوسين عدد الصفوف</div><div class="chart-wrap tall"><canvas id="sChBranch"></canvas></div></div>
+      <div class="panel"><h3>متوسط العمر حسب الفرع</h3><div class="panel-sub">كل الفروع مرتبة بأعلى متوسط عمر، والرقم بين القوسين عدد الصفوف</div><div class="chart-wrap xl"><canvas id="sChBranch"></canvas></div></div>
     </section>
     <div class="section-heading"><h2><span class="tag">جودة</span> جودة البيانات وحساسية الأرقام</h2><span class="section-sub">الصفوف الأصلية لم تُعدّل. الملاحظات وسم فقط ويمكن تصفيتها</span></div>
     <section class="panel-grid halves">
@@ -203,9 +203,9 @@ const SLA_REFRESH_SEC = 600;
     const ages = []; CUR.forEach((r) => { const a = ageOf(r); if (a != null) ages.push(a); });
     const t = thr();
     mk('sChDist', { type: 'bar', data: { labels: bk.map((b) => b[0]), datasets: [{ data: bk.map((b) => ages.filter(b[1]).length), backgroundColor: bk.map((b) => (t != null && !ages.filter(b[1]).every((a) => a <= t) ? p.bad : p.blue)) }] }, options: Object.assign({}, o, { plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: p.line } } } }) });
-    const br = group(CUR, 'branch').filter((b) => b.avg != null && b.key !== UNKNOWN && b.rows >= 30).sort((a, b) => b.avg - a.avg).slice(0, 12);
+    const br = group(CUR, 'branch').filter((b) => b.avg != null).sort((a, b) => b.avg - a.avg);
     mk('sChBranch', { type: 'bar', data: { labels: br.map((b) => b.key + ' (' + fmt(b.rows) + ')'), datasets: [{ data: br.map((b) => +b.avg.toFixed(2)), backgroundColor: br.map((b) => (S.branches.has(b.key) ? p.teal : p.blue)) }] },
-      options: Object.assign({}, o, { indexAxis: 'y', plugins: { legend: { display: false } }, onClick: (ev, els) => { if (!els.length) return; const b = br[els[0].index].key; S.branches.has(b) ? S.branches.delete(b) : S.branches.add(b); S.page = 1; refresh(); }, scales: { x: { grid: { color: p.line } }, y: { grid: { display: false } } } }) });
+      options: Object.assign({}, o, { indexAxis: 'y', plugins: { legend: { display: false } }, onClick: (ev, els) => { if (!els.length) return; const b = br[els[0].index].key; S.branches.has(b) ? S.branches.delete(b) : S.branches.add(b); S.page = 1; refresh(); }, scales: { x: { grid: { color: p.line } }, y: { grid: { display: false }, ticks: { autoSkip: false } } } }) });
   }
 
   function renderKpis() {

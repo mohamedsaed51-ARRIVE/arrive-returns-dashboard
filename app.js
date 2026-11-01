@@ -111,12 +111,12 @@ function drawCharts() {
     { type: 'line', label: 'نسبة المطابقة %', data: days.map((d) => (d.rate == null ? null : +(d.rate * 100).toFixed(2))), borderColor: P.teal, backgroundColor: P.teal, yAxisID: 'y2', tension: .25, pointRadius: 3 }] },
     options: Object.assign({}, o, { scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, grid: { color: P.line }, title: { display: true, text: 'شحنات' } }, y2: { position: 'right', min: 0, max: 100, grid: { display: false }, title: { display: true, text: '%' } } } }) });
   const br = OCT.group(CUR, 'branch', mode);
-  const top = br.slice().sort((a, b) => b.unrecv - a.unrecv).slice(0, 12);
-  const low = br.filter((b) => b.sent > 0).sort((a, b) => a.rate - b.rate).slice(0, 12);
+  const top = br.filter((b) => b.unrecv > 0).sort((a, b) => b.unrecv - a.unrecv);
+  const low = br.filter((b) => b.sent > 0).sort((a, b) => a.rate - b.rate || b.sent - a.sent);
   const pick = (ev, els, chart, list) => { if (!els.length) return; const b = list[els[0].index].key; S.branches.has(b) ? S.branches.delete(b) : S.branches.add(b); S.page = 1; refresh(); };
-  const hOpts = (list, tick) => Object.assign({}, o, { indexAxis: 'y', plugins: { legend: { display: false } }, onClick: (ev, els, ch) => pick(ev, els, ch, list), scales: { x: { grid: { color: P.line }, ticks: tick }, y: { grid: { display: false } } } });
-  mk('chBranchUn', { type: 'bar', data: { labels: top.map((b) => b.key), datasets: [{ data: top.map((b) => b.unrecv), backgroundColor: top.map((b) => (S.branches.has(b.key) ? P.teal : P.bad)) }] }, options: hOpts(top, {}) });
-  mk('chBranchRate', { type: 'bar', data: { labels: low.map((b) => b.key), datasets: [{ data: low.map((b) => +(b.rate * 100).toFixed(2)), backgroundColor: low.map((b) => (S.branches.has(b.key) ? P.teal : P.blue)) }] }, options: hOpts(low, { callback: (v) => v + '%' }) });
+  const hOpts = (list, tick) => Object.assign({}, o, { indexAxis: 'y', plugins: { legend: { display: false } }, onClick: (ev, els, ch) => pick(ev, els, ch, list), scales: { x: { grid: { color: P.line }, ticks: tick }, y: { grid: { display: false }, ticks: { autoSkip: false } } } });
+  mk('chBranchUn', { type: 'bar', data: { labels: top.map((b) => b.key + ' (' + fmt(b.sent) + ')'), datasets: [{ data: top.map((b) => b.unrecv), backgroundColor: top.map((b) => (S.branches.has(b.key) ? P.teal : P.bad)) }] }, options: hOpts(top, {}) });
+  mk('chBranchRate', { type: 'bar', data: { labels: low.map((b) => b.key + ' (' + fmt(b.sent) + ')'), datasets: [{ data: low.map((b) => +(b.rate * 100).toFixed(2)), backgroundColor: low.map((b) => (S.branches.has(b.key) ? P.teal : P.blue)) }] }, options: hOpts(low, { callback: (v) => v + '%' }) });
 }
 
 // ---------- العرض ----------

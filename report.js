@@ -91,13 +91,13 @@
       { type: 'line', label: 'نسبة المطابقة %', data: days.map((d) => (d.rate == null ? null : +(d.rate * 100).toFixed(2))), borderColor: COL.teal, backgroundColor: COL.teal, yAxisID: 'y2', tension: .25, pointRadius: 4, borderWidth: 4 }] },
       options: (f) => ({ plugins: { legend: { position: 'bottom', labels: { color: COL.ink, font: f, boxWidth: 22 } }, tooltip: { enabled: false } },
         scales: { x: axis(f, { stacked: true, grid: { display: false } }), y: axis(f, { stacked: true, beginAtZero: true }), y2: axis(f, { position: 'right', min: 0, max: 100, grid: { display: false } }) } }) }, 1000, 360);
-    const hbar = (list, val, color, tick) => chartImg({ type: 'bar', data: { labels: list.map((b) => b.key), datasets: [{ data: list.map(val), backgroundColor: color }] },
-      options: (f) => ({ indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: axis(f, { beginAtZero: true, ticks: { color: '#475569', font: f, callback: tick }}), y: axis(f, { grid: { display: false } }) } }) }, 480, 420);
-    const imgUn = hbar(brUn.filter((b) => b.unrecv > 0).slice(0, 10), (b) => b.unrecv, COL.bad);
-    const imgRt = hbar(brRate.slice(0, 10), (b) => +(b.rate * 100).toFixed(2), COL.blue, (v) => v + '%');
+    const hbar = (list, val, color, tick) => chartImg({ type: 'bar', data: { labels: list.map((b) => b.key + ' (' + L(b.sent) + ')'), datasets: [{ data: list.map(val), backgroundColor: color }] },
+      options: (f) => ({ indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: axis(f, { beginAtZero: true, ticks: { color: '#475569', font: f, callback: tick }}), y: axis(f, { grid: { display: false }, ticks: { color: '#475569', font: f, autoSkip: false, maxRotation: 0 } }) } }) }, 480, Math.max(420, list.length * 30 + 60));
+    const imgUn = hbar(brUn.filter((b) => b.unrecv > 0), (b) => b.unrecv, COL.bad);
+    const imgRt = hbar(brRate, (b) => +(b.rate * 100).toFixed(2), COL.blue, (v) => v + '%');
     const fig = (t, sub, src) => '<div class="rp-fig"><div class="rp-cap"><b>' + t + '</b><span>' + sub + '</span></div>' + (src ? '<img src="' + src + '" alt="' + t + '">' : '<div class="rp-note">تعذّر رسم الرسم (مكتبة الرسوم غير محمّلة)</div>') + '</div>';
     pages.push(page(head('الرسوم البيانية', ctx) + fig('الأداء اليومي', 'المطابق وغير المستلم (شحنات) مع نسبة المطابقة اليومية', imgDaily) +
-      '<div class="rp-two">' + fig('أعلى 10 فروع في غير المستلم', 'عدد الشحنات', imgUn) + fig('أقل 10 فروع في نسبة المطابقة', 'نسبة المطابقة %', imgRt) + '</div>' + foot()));
+      '<div class="rp-two">' + fig('غير المستلم حسب الفرع', 'عدد الشحنات، والرقم بين القوسين عدد المرسل', imgUn) + fig('نسبة المطابقة حسب الفرع', 'الأقل أولًا %، والرقم بين القوسين عدد المرسل', imgRt) + '</div>' + foot()));
 
     // 4) أداء الفروع
     const brCols = [{ t: 'الفرع' }, { t: 'صفوف', num: true, w: '14mm' }, { t: 'مرسل', num: true, w: '20mm' }, { t: 'غير مستلم', num: true, w: '22mm' }, { t: 'نسبة المطابقة', num: true, w: '26mm' }, { t: 'غير مدرجة', num: true, w: '20mm' }, { t: 'ملاحظات', num: true, w: '18mm' }];

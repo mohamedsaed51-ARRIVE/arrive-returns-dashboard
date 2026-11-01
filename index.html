@@ -108,8 +108,8 @@
     <div class="panel"><h3>المرسل والمطابقة يوميًا</h3><div class="panel-sub">أعمدة: مطابق / غير مستلم — الخط: نسبة المطابقة اليومية (%)</div><div class="chart-wrap tall"><canvas id="chDaily"></canvas></div></div>
   </section>
   <section class="panel-grid halves">
-    <div class="panel"><h3>غير المستلم حسب الفرع</h3><div class="panel-sub">أعلى 12 فرعًا في عدد الشحنات غير المستلمة</div><div class="chart-wrap tall"><canvas id="chBranchUn"></canvas></div></div>
-    <div class="panel"><h3>نسبة المطابقة حسب الفرع</h3><div class="panel-sub">أقل 12 فرعًا في نسبة المطابقة (مرسل − غير مستلم) ÷ مرسل</div><div class="chart-wrap tall"><canvas id="chBranchRate"></canvas></div></div>
+    <div class="panel"><h3>غير المستلم حسب الفرع</h3><div class="panel-sub">كل الفروع التي بها غير مستلم، والرقم بين القوسين عدد المرسل</div><div class="chart-wrap xl"><canvas id="chBranchUn"></canvas></div></div>
+    <div class="panel"><h3>نسبة المطابقة حسب الفرع</h3><div class="panel-sub">كل الفروع، الأقل نسبة أولًا، والرقم بين القوسين عدد المرسل — (مرسل − غير مستلم) ÷ مرسل</div><div class="chart-wrap xl"><canvas id="chBranchRate"></canvas></div></div>
   </section>
 
   <div class="section-heading">
@@ -167,10 +167,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="data.js"></script>
 <script src="core.js"></script>
-<script src="app.js?v=2"></script>
-<script src="report.js?v=2"></script>
+<script src="app.js?v=4"></script>
+<script src="report.js?v=4"></script>
 <script src="live.js"></script>
-<script src="sla.js?v=7"></script>
-<script src="report-sla.js?v=3"></script>
+<script src="sla.js?v=9"></script>
+<script src="report-sla.js?v=5"></script>
 </body>
 </html>
